@@ -1,7 +1,7 @@
 import { SpaceType } from "../types/SpaceType";
-import { cornersArray } from "./Corners";
+import { CORNERS_ARRAY } from "./Corners";
 
-export const bottomProperties: SpaceType[] = [
+export const BOTTOM_PROPERTIES: SpaceType[] = [
   {
     id: 9,
     name: "Connecticut Ave",
@@ -43,7 +43,7 @@ export const bottomProperties: SpaceType[] = [
   },
 ];
 
-export const leftProperties: SpaceType[] = [
+export const LEFT_PROPERTIES: SpaceType[] = [
   {
     id: 19,
     name: "New York Ave",
@@ -103,7 +103,7 @@ export const leftProperties: SpaceType[] = [
   },
 ];
 
-export const topProperties: SpaceType[] = [
+export const TOP_PROPERTIES: SpaceType[] = [
   {
     id: 21,
     name: "Kentucky Ave",
@@ -157,7 +157,7 @@ export const topProperties: SpaceType[] = [
   },
 ];
 
-export const rightProperties: SpaceType[] = [
+export const RIGHT_PROPERTIES: SpaceType[] = [
   {
     id: 31,
     name: "Pacific Ave",
@@ -199,10 +199,10 @@ export const rightProperties: SpaceType[] = [
   },
 ];
 
-export const allProperties = [
-  ...bottomProperties,
-  ...topProperties,
-  ...leftProperties,
-  ...rightProperties,
-  ...cornersArray,
+export const ALL_PROPERTIES = [
+  ...BOTTOM_PROPERTIES,
+  ...TOP_PROPERTIES,
+  ...LEFT_PROPERTIES,
+  ...RIGHT_PROPERTIES,
+  ...CORNERS_ARRAY,
 ];

@@ -1,6 +1,6 @@
 import { SpaceType } from "../types/SpaceType";
 
-export const corners = {
+export const CORNERS = {
   topLeft: {
     id: 20,
     name: "FREE PARKING",
@@ -28,9 +28,9 @@ export const corners = {
   } as SpaceType,
 };
 
-export const cornersArray = [
-  corners.topLeft,
-  corners.topRight,
-  corners.bottomLeft,
-  corners.bottomRight,
+export const CORNERS_ARRAY = [
+  CORNERS.topLeft,
+  CORNERS.topRight,
+  CORNERS.bottomLeft,
+  CORNERS.bottomRight,
 ];
