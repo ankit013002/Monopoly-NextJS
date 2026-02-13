@@ -1,7 +1,7 @@
 // app/page.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import TokensLayer from "../components/TokensLayer";
 import { BOARD_CELLS, BOARD_LEN } from "../utils/BoardLayout";
 import { Cell } from "../components/Cell";
@@ -141,8 +141,6 @@ export default function Home() {
     setIsMoving(false);
     return landedOnSpaceId;
   }
-
-  function payRentOnProperty() {}
 
   function stepSelected() {
     if (!selectedToken) return;

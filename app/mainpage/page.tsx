@@ -1,13 +1,71 @@
 "use client";
 
-import { redirect } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import io, { Socket } from "socket.io-client";
 
 const Mainpage = () => {
+  const server_url = process.env.SERVER || "http://localhost:5000";
   const [numberOfPlayers, setNumberOfPlayers] = useState(0);
+  const [roomId, setRoomId] = useState("");
+  const socketRef = useRef<Socket | null>(null);
 
-  const handleSubmit = () => {
-    redirect(`/gamepage?players=${numberOfPlayers}`);
+  useEffect(() => {
+    const newSocket = io(server_url);
+    socketRef.current = newSocket;
+
+    newSocket.on("game-created", (data) => {
+      console.log("Game created:", data);
+    });
+
+    newSocket.on("player-joined", (data) => {
+      console.log("Player joined:", data);
+    });
+
+    return () => newSocket.close();
+  }, [server_url]);
+
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch(`${server_url}/room/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          numberOfPlayers,
+        }),
+      });
+
+      const resJson = await response.json();
+      console.log(`Response: ${resJson.message}`);
+      if (resJson.gameId && socketRef.current) {
+        socketRef.current.emit("join-room", resJson.gameId);
+      }
+    } catch (err) {
+      console.error("Error: ", err);
+    }
+
+    // redirect(`/gamepage?players=${numberOfPlayers}`);
+  };
+
+  const joinRoom = async () => {
+    try {
+      const response = await fetch(`${server_url}/room/join`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ gameId: roomId }),
+      });
+
+      const resJson = await response.json();
+      console.log(`Response: ${resJson.message}`);
+      if (socketRef.current) {
+        socketRef.current.emit("join-room", roomId);
+      }
+    } catch (err) {
+      console.error("Error: ", err);
+    }
   };
 
   return (
@@ -27,7 +85,16 @@ const Mainpage = () => {
           <option value={4}>4</option>
         </select>
         <button onClick={() => handleSubmit()} className="btn btn-ghost">
-          Submit
+          Create Room
+        </button>
+        <input
+          type="text"
+          placeholder="Room ID"
+          className="input input-bordered w-full max-w-xs"
+          onChange={(e) => setRoomId(e.target.value)}
+        />
+        <button onClick={() => joinRoom()} className="btn btn-ghost">
+          Join Room
         </button>
       </div>
     </div>

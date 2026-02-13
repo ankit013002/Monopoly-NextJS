@@ -8,14 +8,14 @@ interface PlayerStatsProps {
 
 const PlayerStats = ({ playerRef }: PlayerStatsProps) => {
   const pingServer = async () => {
-    const serverUrl = process.env.SERVER;
+    const serverUrl = process.env.SERVER || "http://localhost:5000";
 
     if (!serverUrl) {
       console.error("SERVER environment variable is not defined.");
       return;
     }
 
-    const response = await fetch(serverUrl);
+    const response = await fetch(`${serverUrl}/room`);
     const resJson = await response.json();
     console.log(resJson.message);
   };
