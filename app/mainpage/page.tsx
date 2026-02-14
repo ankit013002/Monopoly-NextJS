@@ -2,78 +2,78 @@
 
 import { useState, useEffect, useRef } from "react";
 import io, { Socket } from "socket.io-client";
+import WaitingList from "./(components)/WaitingList";
 
 const Mainpage = () => {
   const server_url = process.env.SERVER || "http://localhost:5000";
   const [numberOfPlayers, setNumberOfPlayers] = useState(0);
   const [roomId, setRoomId] = useState("");
-  const socketRef = useRef<Socket | null>(null);
+  const [playerName, setPlayerName] = useState("");
+  const socketRef = useRef<SocketIOClient.Socket | null>(null);
+  const [createGameSuccessful, setCreateGameSuccessful] = useState(false);
+  const gameIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     const newSocket = io(server_url);
     socketRef.current = newSocket;
-
-    newSocket.on("game-created", (data) => {
-      console.log("Game created:", data);
-    });
-
-    newSocket.on("player-joined", (data) => {
-      console.log("Player joined:", data);
-    });
-
-    return () => newSocket.close();
   }, [server_url]);
 
   const handleSubmit = async () => {
-    try {
-      const response = await fetch(`${server_url}/room/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          numberOfPlayers,
-        }),
-      });
-
-      const resJson = await response.json();
-      console.log(`Response: ${resJson.message}`);
-      if (resJson.gameId && socketRef.current) {
-        socketRef.current.emit("join-room", resJson.gameId);
-      }
-    } catch (err) {
-      console.error("Error: ", err);
+    if (!socketRef.current) {
+      return;
     }
 
-    // redirect(`/gamepage?players=${numberOfPlayers}`);
+    socketRef.current.emit("create-game", {
+      name: playerName,
+    });
+
+    socketRef.current.on("create-game-confirmation", (response) => {
+      console.log(response.message);
+      gameIdRef.current = parseInt(response.gameId);
+      setCreateGameSuccessful(true);
+    });
   };
 
   const joinRoom = async () => {
-    try {
-      const response = await fetch(`${server_url}/room/join`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ gameId: roomId }),
-      });
-
-      const resJson = await response.json();
-      console.log(`Response: ${resJson.message}`);
-      if (socketRef.current) {
-        socketRef.current.emit("join-room", roomId);
-      }
-    } catch (err) {
-      console.error("Error: ", err);
+    if (!socketRef.current) {
+      return;
     }
+
+    socketRef.current.emit("join-game", {
+      name: playerName,
+      gameId: roomId,
+    });
+
+    socketRef.current.emit("join-game-confirmation", (response) => {
+      console.log(response.message);
+      gameIdRef.current = parseInt(response.gameId);
+      setCreateGameSuccessful(true);
+    });
   };
 
   return (
     <div className="h-screen w-screen flex justify-center items-center">
+      {createGameSuccessful && (
+        <div className="absolute right-[5%]">
+          <WaitingList
+            playerName={playerName}
+            playerCount={numberOfPlayers}
+            socket={socketRef.current}
+            gameId={gameIdRef.current}
+          />
+        </div>
+      )}
       <div className="flex flex-col gap-5">
         <div className="text-center font-black tracking-[0.35em] text-xl md:text-3xl">
           MONOPOLY
         </div>
+        <input
+          type="text"
+          placeholder="Enter your name"
+          className="input input-bordered w-full max-w-xs"
+          value={playerName}
+          onChange={(e) => setPlayerName(e.target.value)}
+        />
         <select
           onChange={(e) => setNumberOfPlayers(parseInt(e.target.value))}
           defaultValue="Number of Players"
@@ -84,7 +84,11 @@ const Mainpage = () => {
           <option value={3}>3</option>
           <option value={4}>4</option>
         </select>
-        <button onClick={() => handleSubmit()} className="btn btn-ghost">
+        <button
+          disabled={createGameSuccessful}
+          onClick={() => handleSubmit()}
+          className="btn btn-ghost"
+        >
           Create Room
         </button>
         <input
