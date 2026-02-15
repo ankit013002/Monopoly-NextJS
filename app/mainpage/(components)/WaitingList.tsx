@@ -8,6 +8,7 @@ interface WaitingList {
   playerCount: number;
   socket: SocketIOClient.Socket | null;
   gameId: number | null;
+  gameState: any;
 }
 
 const WaitingList = ({
@@ -15,17 +16,49 @@ const WaitingList = ({
   playerCount,
   socket,
   gameId,
+  gameState,
 }: WaitingList) => {
   const clientSocket = useRef(socket);
-  const [players, setPlayers] = useState([playerName]);
+  const [players, setPlayers] = useState(() => {
+    if (gameState) {
+      const newPlayers = gameState.players.map((player) => ({
+        name: player.name,
+        inGame: true,
+      }));
+      while (newPlayers.length < gameState.playerCount) {
+        newPlayers.push(undefined);
+      }
+      return newPlayers;
+    } else {
+      const allPlayers = Array.from({ length: playerCount - 1 });
+      allPlayers.push({
+        name: playerName,
+        inGame: true,
+      });
+      console.log(allPlayers);
+      return allPlayers.reverse();
+    }
+  });
 
   useEffect(() => {
     if (!clientSocket.current) {
       return;
     }
 
-    clientSocket.current.on("player-joined", (message: String) => {
-      console.log(`${message} joined`);
+    clientSocket.current.on("game-state-update", (response) => {
+      console.log(response.gameState);
+      setPlayers(() => {
+        const newPlayers = response.gameState.players.map((player) => {
+          return {
+            name: player.name,
+            inGame: true,
+          };
+        });
+        while (newPlayers.length < response.gameState.playerCount) {
+          newPlayers.push(undefined);
+        }
+        return newPlayers;
+      });
     });
   }, [clientSocket.current]);
 
@@ -35,7 +68,7 @@ const WaitingList = ({
         <li className="p-4 pb-2 text-xs opacity-60 tracking-wide">
           Game ID: {gameId}
         </li>
-
+        {/* 
         <li className="list-row items-center">
           <div className="text-4xl font-thin opacity-30 tabular-nums">{1}</div>
           <div className="list-col-grow">
@@ -45,22 +78,26 @@ const WaitingList = ({
             </div>
           </div>
           <FaCheck />
-        </li>
+        </li> */}
 
-        {Array.from({ length: playerCount - 1 }).map((_, index) => {
+        {players.map((player, index) => {
           return (
             <li key={index} className="list-row items-center">
               <div className="text-4xl font-thin opacity-30 tabular-nums">
-                {index + 2}
+                {index + 1}
               </div>
               <div className="list-col-grow">
-                <div>Dio Lupa</div>
+                <div>{player && player.name}</div>
                 <div className="text-xs uppercase font-semibold opacity-60">
                   Waiting
                 </div>
               </div>
               <div>
-                <span className="loading loading-spinner loading-xs"></span>
+                {player && player.inGame ? (
+                  <FaCheck />
+                ) : (
+                  <span className="loading loading-spinner loading-xs"></span>
+                )}
               </div>
             </li>
           );

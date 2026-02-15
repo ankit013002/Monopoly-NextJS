@@ -12,10 +12,25 @@ const Mainpage = () => {
   const socketRef = useRef<SocketIOClient.Socket | null>(null);
   const [createGameSuccessful, setCreateGameSuccessful] = useState(false);
   const gameIdRef = useRef<number | null>(null);
+  const [gameState, setGameState] = useState(null);
 
   useEffect(() => {
     const newSocket = io(server_url);
     socketRef.current = newSocket;
+
+    newSocket.on("create-game-confirmation", (response) => {
+      console.log(response.message);
+      gameIdRef.current = parseInt(response.gameId);
+      setGameState(response.gameState);
+      setCreateGameSuccessful(true);
+    });
+
+    newSocket.on("join-game-confirmation", (response) => {
+      console.log(response.message);
+      gameIdRef.current = parseInt(response.gameId);
+      setGameState(response.gameState);
+      setCreateGameSuccessful(true);
+    });
   }, [server_url]);
 
   const handleSubmit = async () => {
@@ -24,13 +39,8 @@ const Mainpage = () => {
     }
 
     socketRef.current.emit("create-game", {
-      name: playerName,
-    });
-
-    socketRef.current.on("create-game-confirmation", (response) => {
-      console.log(response.message);
-      gameIdRef.current = parseInt(response.gameId);
-      setCreateGameSuccessful(true);
+      player: playerName,
+      playerCount: numberOfPlayers,
     });
   };
 
@@ -40,14 +50,8 @@ const Mainpage = () => {
     }
 
     socketRef.current.emit("join-game", {
-      name: playerName,
-      gameId: roomId,
-    });
-
-    socketRef.current.emit("join-game-confirmation", (response) => {
-      console.log(response.message);
-      gameIdRef.current = parseInt(response.gameId);
-      setCreateGameSuccessful(true);
+      player: playerName,
+      gameIdString: roomId,
     });
   };
 
@@ -60,6 +64,7 @@ const Mainpage = () => {
             playerCount={numberOfPlayers}
             socket={socketRef.current}
             gameId={gameIdRef.current}
+            gameState={gameState}
           />
         </div>
       )}
