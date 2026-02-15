@@ -1,7 +1,8 @@
 // app/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
+import io, { Socket } from "socket.io-client";
 import TokensLayer from "../components/TokensLayer";
 import { BOARD_CELLS, BOARD_LEN } from "../utils/BoardLayout";
 import { Cell } from "../components/Cell";
@@ -25,6 +26,9 @@ function sleep(ms: number) {
 }
 
 export default function Home() {
+  const gameIdRef = useRef<number | null>(null);
+  const server_url = process.env.SERVER || "http://localhost:5000";
+  const socketRef = useRef<SocketIOClient.Socket | null>(null);
   const [selectedId, setSelectedId] = useState<number>(0);
   const [lastRoll, setLastRoll] = useState<{
     d1: number;
@@ -33,6 +37,27 @@ export default function Home() {
   } | null>(null);
 
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const gameId = searchParams.get("gameId");
+    if (!gameId) {
+      redirect("/");
+    }
+    gameIdRef.current = parseInt(gameId);
+    console.log("GamePage: Creating socket connection for game", gameId);
+    const newSocket = io(server_url);
+    socketRef.current = newSocket;
+
+    newSocket.on("connect", () => {
+      console.log("GamePage: Socket connected with ID:", newSocket.id);
+      console.log("GamePage: Joining game room", gameId);
+      newSocket.emit("join-game-room", { gameId: parseInt(gameId) });
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [searchParams, server_url]);
 
   const [gameState, setGameState] = useState<GameStateType>(() => {
     const playerCountQuery = searchParams.get("players");
@@ -201,7 +226,11 @@ export default function Home() {
             })}
           </div>
         </div>
-        <PlayerStats playerRef={playerRef} />
+        <PlayerStats
+          playerRef={playerRef}
+          socket={socketRef.current}
+          gameId={gameIdRef.current}
+        />
       </div>
 
       {landedOnProperty && (

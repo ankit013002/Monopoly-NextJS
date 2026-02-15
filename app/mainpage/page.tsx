@@ -31,6 +31,10 @@ const Mainpage = () => {
       setGameState(response.gameState);
       setCreateGameSuccessful(true);
     });
+
+    newSocket.on("game-started", (response) => {
+      window.location.href = `/gamepage?gameId=${response.gameId}&players=${response.playerCount}`;
+    });
   }, [server_url]);
 
   const handleSubmit = async () => {

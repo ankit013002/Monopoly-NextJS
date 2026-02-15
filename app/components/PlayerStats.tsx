@@ -1,23 +1,46 @@
+import { useEffect, useRef } from "react";
 import { PlayerType } from "../types/PlayerType";
 import { BOARD_CELLS } from "../utils/BoardLayout";
 import { ALL_PROPERTIES } from "../utils/Properties";
 
 interface PlayerStatsProps {
   playerRef: PlayerType | undefined;
+  socket: SocketIOClient.Socket | null;
+  gameId: number | null;
 }
 
-const PlayerStats = ({ playerRef }: PlayerStatsProps) => {
-  const pingServer = async () => {
-    const serverUrl = process.env.SERVER || "http://localhost:5000";
-
-    if (!serverUrl) {
-      console.error("SERVER environment variable is not defined.");
+const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
+  useEffect(() => {
+    if (!socket) {
+      console.log("PlayerStats: No socket available");
       return;
     }
 
-    const response = await fetch(`${serverUrl}/room`);
-    const resJson = await response.json();
-    console.log(resJson.message);
+    console.log("PlayerStats: Setting up ping-health-response listener");
+
+    const handlePingResponse = (response: any) => {
+      console.log("PlayerStats: Received ping response:", response);
+      console.log(response.message, "from socket:", response.from);
+    };
+
+    socket.on("ping-health-response", handlePingResponse);
+
+    // Cleanup function
+    return () => {
+      socket.off("ping-health-response", handlePingResponse);
+    };
+  }, [socket]);
+
+  const pingServer = async () => {
+    if (!socket) {
+      console.log("PlayerStats: Cannot ping - no socket");
+      return;
+    }
+
+    console.log("PlayerStats: Sending ping for game", gameId);
+    socket.emit("ping-health", {
+      gameId,
+    });
   };
 
   return (

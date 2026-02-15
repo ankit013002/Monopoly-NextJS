@@ -1,5 +1,6 @@
 "use client";
 
+import { redirect } from "next/navigation";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 
@@ -62,23 +63,17 @@ const WaitingList = ({
     });
   }, [clientSocket.current]);
 
+  const startGame = () => {
+    if (!clientSocket.current) return;
+    clientSocket.current.emit("start-game", { gameId });
+  };
+
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       <ul className="list bg-base-100 rounded-box shadow-md">
         <li className="p-4 pb-2 text-xs opacity-60 tracking-wide">
           Game ID: {gameId}
         </li>
-        {/* 
-        <li className="list-row items-center">
-          <div className="text-4xl font-thin opacity-30 tabular-nums">{1}</div>
-          <div className="list-col-grow">
-            <div>{playerName}</div>
-            <div className="text-xs uppercase font-semibold opacity-60">
-              Joined
-            </div>
-          </div>
-          <FaCheck />
-        </li> */}
 
         {players.map((player, index) => {
           return (
@@ -103,6 +98,15 @@ const WaitingList = ({
           );
         })}
       </ul>
+      <button
+        disabled={
+          playerCount != players.length || playerName !== players[0]?.name
+        }
+        className="btn w-full bg-green-700"
+        onClick={() => startGame()}
+      >
+        Start Game
+      </button>
     </div>
   );
 };
