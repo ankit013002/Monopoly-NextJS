@@ -1,77 +1,32 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import io, { Socket } from "socket.io-client";
-import WaitingList from "./(components)/WaitingList";
+import { useState } from "react";
 
 const Mainpage = () => {
-  const server_url = process.env.SERVER || "http://localhost:5000";
   const [numberOfPlayers, setNumberOfPlayers] = useState(0);
   const [roomId, setRoomId] = useState("");
   const [playerName, setPlayerName] = useState("");
-  const socketRef = useRef<SocketIOClient.Socket | null>(null);
-  const [createGameSuccessful, setCreateGameSuccessful] = useState(false);
-  const gameIdRef = useRef<number | null>(null);
-  const [gameState, setGameState] = useState(null);
 
-  useEffect(() => {
-    const newSocket = io(server_url);
-    socketRef.current = newSocket;
-
-    newSocket.on("create-game-confirmation", (response) => {
-      console.log(response.message);
-      gameIdRef.current = parseInt(response.gameId);
-      setGameState(response.gameState);
-      setCreateGameSuccessful(true);
-    });
-
-    newSocket.on("join-game-confirmation", (response) => {
-      console.log(response.message);
-      gameIdRef.current = parseInt(response.gameId);
-      setGameState(response.gameState);
-      setCreateGameSuccessful(true);
-    });
-
-    newSocket.on("game-started", (response) => {
-      window.location.href = `/gamepage?gameId=${response.gameId}&players=${response.playerCount}`;
-    });
-  }, [server_url]);
-
-  const handleSubmit = async () => {
-    if (!socketRef.current) {
+  const handleSubmit = () => {
+    if (!playerName || numberOfPlayers < 2) {
+      alert("Please enter your name and select number of players");
       return;
     }
-
-    socketRef.current.emit("create-game", {
-      player: playerName,
-      playerCount: numberOfPlayers,
-    });
+    // Redirect to gamepage as host/creator
+    window.location.href = `/gamepage?action=create&playerName=${encodeURIComponent(playerName)}&playerCount=${numberOfPlayers}`;
   };
 
-  const joinRoom = async () => {
-    if (!socketRef.current) {
+  const joinRoom = () => {
+    if (!playerName || !roomId) {
+      alert("Please enter your name and room ID");
       return;
     }
-
-    socketRef.current.emit("join-game", {
-      player: playerName,
-      gameIdString: roomId,
-    });
+    // Redirect to gamepage as joiner
+    window.location.href = `/gamepage?action=join&playerName=${encodeURIComponent(playerName)}&gameId=${roomId}`;
   };
 
   return (
     <div className="h-screen w-screen flex justify-center items-center">
-      {createGameSuccessful && (
-        <div className="absolute right-[5%]">
-          <WaitingList
-            playerName={playerName}
-            playerCount={numberOfPlayers}
-            socket={socketRef.current}
-            gameId={gameIdRef.current}
-            gameState={gameState}
-          />
-        </div>
-      )}
       <div className="flex flex-col gap-5">
         <div className="text-center font-black tracking-[0.35em] text-xl md:text-3xl">
           MONOPOLY
@@ -93,11 +48,7 @@ const Mainpage = () => {
           <option value={3}>3</option>
           <option value={4}>4</option>
         </select>
-        <button
-          disabled={createGameSuccessful}
-          onClick={() => handleSubmit()}
-          className="btn btn-ghost"
-        >
+        <button onClick={() => handleSubmit()} className="btn btn-ghost">
           Create Room
         </button>
         <input

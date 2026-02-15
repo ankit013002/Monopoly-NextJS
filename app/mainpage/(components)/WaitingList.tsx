@@ -19,54 +19,76 @@ const WaitingList = ({
   gameId,
   gameState,
 }: WaitingList) => {
-  const clientSocket = useRef(socket);
-  const [players, setPlayers] = useState(() => {
-    if (gameState) {
-      const newPlayers = gameState.players.map((player) => ({
+  const [players, setPlayers] = useState<
+    Array<{ name: string; inGame: boolean } | undefined>
+  >([]);
+
+  // Update players when gameState or playerCount changes
+  useEffect(() => {
+    if (gameState && gameState.players) {
+      const newPlayers = gameState.players.map((player: any) => ({
         name: player.name,
         inGame: true,
       }));
       while (newPlayers.length < gameState.playerCount) {
         newPlayers.push(undefined);
       }
-      return newPlayers;
-    } else {
-      const allPlayers = Array.from({ length: playerCount - 1 });
-      allPlayers.push({
-        name: playerName,
-        inGame: true,
-      });
-      console.log(allPlayers);
-      return allPlayers.reverse();
+      setPlayers(newPlayers);
+      console.log("WaitingList: Updated players from gameState", newPlayers);
+    } else if (playerCount > 0) {
+      // Initialize with empty slots when no gameState yet
+      const emptyPlayers = Array.from({ length: playerCount }, () => undefined);
+      setPlayers(emptyPlayers);
+      console.log(
+        "WaitingList: Initialized empty slots for",
+        playerCount,
+        "players",
+      );
     }
-  });
+  }, [gameState, playerCount]);
 
   useEffect(() => {
-    if (!clientSocket.current) {
+    if (!socket) {
+      console.log("WaitingList: No socket available");
       return;
     }
 
-    clientSocket.current.on("game-state-update", (response) => {
-      console.log(response.gameState);
-      setPlayers(() => {
-        const newPlayers = response.gameState.players.map((player) => {
-          return {
-            name: player.name,
-            inGame: true,
-          };
-        });
-        while (newPlayers.length < response.gameState.playerCount) {
-          newPlayers.push(undefined);
-        }
-        return newPlayers;
-      });
-    });
-  }, [clientSocket.current]);
+    console.log("WaitingList: Setting up game-state-update listener");
+
+    const handleGameStateUpdate = (response: any) => {
+      console.log(
+        "WaitingList: Received game-state-update",
+        response.gameState,
+      );
+      const newPlayers = response.gameState.players.map((player: any) => ({
+        name: player.name,
+        inGame: true,
+      }));
+      while (newPlayers.length < response.gameState.playerCount) {
+        newPlayers.push(undefined);
+      }
+      setPlayers(newPlayers);
+    };
+
+    socket.on("game-state-update", handleGameStateUpdate);
+
+    return () => {
+      socket.off("game-state-update", handleGameStateUpdate);
+    };
+  }, [socket]);
 
   const startGame = () => {
-    if (!clientSocket.current) return;
-    clientSocket.current.emit("start-game", { gameId });
+    if (!socket) {
+      console.log("WaitingList: Cannot start game - no socket");
+      return;
+    }
+    console.log("WaitingList: Starting game", gameId);
+    socket.emit("start-game", { gameId });
   };
+
+  const isHost = gameState?.players?.[0]?.name === playerName;
+  const allPlayersJoined =
+    players.length > 0 && players.every((p) => p?.inGame);
 
   return (
     <div className="flex flex-col gap-2">
@@ -99,13 +121,15 @@ const WaitingList = ({
         })}
       </ul>
       <button
-        disabled={
-          playerCount != players.length || playerName !== players[0]?.name
-        }
+        disabled={!isHost || !allPlayersJoined}
         className="btn w-full bg-green-700"
         onClick={() => startGame()}
       >
-        Start Game
+        {!isHost
+          ? "Waiting for host..."
+          : !allPlayersJoined
+            ? "Waiting for players..."
+            : "Start Game"}
       </button>
     </div>
   );
