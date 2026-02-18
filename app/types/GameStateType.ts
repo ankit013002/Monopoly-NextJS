@@ -1,8 +1,14 @@
-import { PlayerType } from "./PlayerType";
-import { SpaceType } from "./SpaceType";
-
 export type GameStateType = {
-  playerTurnId: number;
-  properties: SpaceType[];
-  players: PlayerType[];
+  playerCount: number;
+  playerTurnIndex: number;
+  players: [
+    {
+      socketId: string;
+      name: string;
+      color: string;
+      balance: number;
+      ownedSpaces: number[];
+      position: number;
+    },
+  ];
 };

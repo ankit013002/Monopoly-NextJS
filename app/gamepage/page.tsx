@@ -9,7 +9,7 @@ import {
   Dispatch,
   SetStateAction,
 } from "react";
-import io, { Socket } from "socket.io-client";
+import io from "socket.io-client";
 import TokensLayer from "../components/TokensLayer";
 import { BOARD_CELLS, BOARD_LEN } from "../utils/BoardLayout";
 import { Cell } from "../components/Cell";
@@ -35,7 +35,7 @@ function sleep(ms: number) {
 
 export default function Home() {
   const gameIdRef = useRef<number | null>(null);
-  const server_url = process.env.SERVER || "http://localhost:5000";
+  const serverUrlRef = useRef<string>("");
   const socketRef = useRef<SocketIOClient.Socket | null>(null);
   const [selectedId, setSelectedId] = useState<number>(0);
   const [lastRoll, setLastRoll] = useState<{
@@ -49,6 +49,7 @@ export default function Home() {
   const [playerCount, setPlayerCount] = useState(0);
   const [playerName, setPlayerName] = useState("");
   const [backendGameState, setBackendGameState] = useState<any>(null);
+  const [gameState, setGameState] = useState<GameStateType | null>(null);
 
   const searchParams = useSearchParams();
 
@@ -58,9 +59,11 @@ export default function Home() {
     const gameIdParam = searchParams.get("gameId");
     const playerCountParam = searchParams.get("playerCount");
 
+    serverUrlRef.current =
+      process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
+
     if (!action || !name) {
       redirect("/");
-      return;
     }
 
     setPlayerName(name);
@@ -73,7 +76,7 @@ export default function Home() {
     }
 
     console.log("GamePage: Creating socket connection");
-    const newSocket = io(server_url);
+    const newSocket = io(serverUrlRef.current);
     socketRef.current = newSocket;
 
     newSocket.on("connect", () => {
@@ -122,9 +125,7 @@ export default function Home() {
     return () => {
       newSocket.disconnect();
     };
-  }, [searchParams, server_url]);
-
-  const [gameState, setGameState] = useState<GameStateType | null>(null);
+  }, [searchParams]);
 
   // Initialize game state when playerCount is available
   useEffect(() => {
@@ -217,6 +218,11 @@ export default function Home() {
         });
         const newGameState = { ...prev, players };
         return newGameState;
+      });
+      socketRef.current?.emit("move-token", {
+        gameId: gameIdRef.current,
+        playerId,
+        steps: 1,
       });
       await sleep(120);
     }
