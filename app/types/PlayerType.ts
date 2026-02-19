@@ -1,5 +1,6 @@
 export type PlayerType = {
-  id: number;
+  socketId: string;
+  name: string;
   color: string;
   balance: number;
   ownedSpaces: number[];

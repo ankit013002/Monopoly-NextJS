@@ -13,8 +13,8 @@ export default function TokensLayer({
 }: {
   tokens: PlayerType[];
   board: BoardCell[];
-  selectedId: number;
-  onSelect: (id: number) => void;
+  selectedId: string;
+  onSelect: (id: string) => void;
 }) {
   const tokensByPos = useMemo(() => {
     const map = new Map<number, PlayerType[]>();
@@ -44,12 +44,12 @@ export default function TokensLayer({
             <div className="absolute inset-1 flex flex-wrap items-center justify-center gap-1">
               {list.map((t) => (
                 <button
-                  key={t.id}
+                  key={t.socketId}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onSelect(t.id);
+                    onSelect(t.socketId);
                   }}
-                  title={`${t.id} @ ${cell.space.name}`}
+                  title={`${t.socketId} @ ${cell.space.name}`}
                   className={[
                     "pointer-events-auto",
                     "w-5 h-5 md:w-7 md:h-7",
@@ -57,10 +57,10 @@ export default function TokensLayer({
                     "flex items-center justify-center",
                     "text-[10px] md:text-xs font-bold text-white",
                     t.color,
-                    selectedId === t.id ? "ring-2 ring-black/80" : "",
+                    selectedId === t.socketId ? "ring-2 ring-black/80" : "",
                   ].join(" ")}
                 >
-                  {t.id}
+                  {t.socketId}
                 </button>
               ))}
             </div>

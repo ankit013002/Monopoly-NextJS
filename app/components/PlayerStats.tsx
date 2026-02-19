@@ -61,7 +61,7 @@ const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
             <div className="flex justify-between">
               <span className="opacity-80">Balance</span>
               <span className="font-semibold">
-                ${playerRef.balance.toLocaleString()}
+                {/* ${playerRef.balance.toLocaleString()} */}
               </span>
             </div>
 
@@ -76,13 +76,13 @@ const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
             <div className="flex justify-between">
               <span className="opacity-80">Properties</span>
               <span className="font-semibold">
-                {playerRef.ownedSpaces.length}
+                {/* {playerRef.ownedSpaces.length} */}
               </span>
             </div>
           </div>
 
           {/* Owned properties list */}
-          {playerRef.ownedSpaces.length > 0 ? (
+          {/* {playerRef?.ownedSpaces.length > 0 ? (
             <div className="mt-3">
               <div className="text-xs font-semibold mb-1">Owned Spaces</div>
               <div className="max-h-24 overflow-y-auto rounded-md border border-white/10 bg-white/5 p-1">
@@ -111,7 +111,7 @@ const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
             <button onClick={() => pingServer()} className="btn bg-red-700">
               Ping Server
             </button>
-          </div>
+          </div> */}
         </>
       ) : (
         <div className="text-xs opacity-60">No player selected</div>
