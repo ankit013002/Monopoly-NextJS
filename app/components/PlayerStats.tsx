@@ -4,13 +4,20 @@ import { BOARD_CELLS } from "../utils/BoardLayout";
 import { ALL_PROPERTIES } from "../utils/Properties";
 
 interface PlayerStatsProps {
-  playerRef: PlayerType | undefined;
+  playerRef: PlayerType | null;
   socket: SocketIOClient.Socket | null;
   gameId: number | null;
 }
 
 const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
+  console.log(playerRef, "PlayerStats: Received playerRef");
+
   useEffect(() => {
+    if (!playerRef) {
+      console.log("PlayerStats: No playerRef available");
+      return;
+    }
+
     if (!socket) {
       console.log("PlayerStats: No socket available");
       return;
@@ -29,7 +36,18 @@ const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
     return () => {
       socket.off("ping-health-response", handlePingResponse);
     };
-  }, [socket]);
+  }, [socket, playerRef]);
+
+  const endTurn = () => {
+    if (!socket) {
+      console.log("PlayerStats: Cannot end turn - no socket");
+      return;
+    }
+
+    socket.emit("end-turn", {
+      gameId,
+    });
+  };
 
   const pingServer = async () => {
     if (!socket) {
@@ -43,13 +61,15 @@ const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
     });
   };
 
+  console.log("Players ownsed spaces:", playerRef?.ownedSpaces);
+
   return (
     <div className="rounded-xl border border-black/30 bg-black/80 shadow-md p-3 text-white">
       {playerRef ? (
         <>
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
-            <div className="font-bold text-sm">Player {playerRef.id}</div>
+            <div className="font-bold text-sm">Player {playerRef.name}</div>
             <div
               className="h-3 w-3 rounded-full border border-black/40"
               style={{ backgroundColor: playerRef.color }}
@@ -61,7 +81,7 @@ const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
             <div className="flex justify-between">
               <span className="opacity-80">Balance</span>
               <span className="font-semibold">
-                {/* ${playerRef.balance.toLocaleString()} */}
+                ${playerRef.balance.toLocaleString()}
               </span>
             </div>
 
@@ -76,13 +96,13 @@ const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
             <div className="flex justify-between">
               <span className="opacity-80">Properties</span>
               <span className="font-semibold">
-                {/* {playerRef.ownedSpaces.length} */}
+                {playerRef.ownedSpaces.length}
               </span>
             </div>
           </div>
 
           {/* Owned properties list */}
-          {/* {playerRef?.ownedSpaces.length > 0 ? (
+          {playerRef?.ownedSpaces.length > 0 ? (
             <div className="mt-3">
               <div className="text-xs font-semibold mb-1">Owned Spaces</div>
               <div className="max-h-24 overflow-y-auto rounded-md border border-white/10 bg-white/5 p-1">
@@ -107,11 +127,13 @@ const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
           <div className="flex flex-col p-3 gap-2">
             <button className="btn">Trade a Property</button>
             <button className="btn">Auction a Property</button>
-            <button className="btn bg-red-700">End Turn</button>
+            <button className="btn bg-red-700" onClick={() => endTurn()}>
+              End Turn
+            </button>
             <button onClick={() => pingServer()} className="btn bg-red-700">
               Ping Server
             </button>
-          </div> */}
+          </div>
         </>
       ) : (
         <div className="text-xs opacity-60">No player selected</div>

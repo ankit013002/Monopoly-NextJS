@@ -7,36 +7,49 @@ import { SpaceType } from "../types/SpaceType";
 import { GROUP_STRIPE } from "../utils/Groups";
 
 interface PropertyCardPropsType {
-  setGameState: Dispatch<SetStateAction<GameStateType>>;
-  playerRef: PlayerType | undefined;
+  socket: SocketIOClient.Socket | null;
+  gameId: number | null;
+  playerRef: PlayerType | null;
   property: SpaceType;
 }
 
 const PropertyCard = ({
-  setGameState,
+  socket,
+  gameId,
   playerRef,
   property,
 }: PropertyCardPropsType) => {
   function purchaseProperty() {
-    setGameState((prevState) => {
-      if (!playerRef) return prevState;
+    if (!playerRef) {
+      console.log("PropertyCard: No playerRef provided");
+      return null;
+    }
 
-      return {
-        ...prevState,
-        players: prevState.players.map((player) =>
-          player.id === playerRef.id
-            ? {
-                ...player,
-                ownedSpaces: player.ownedSpaces.includes(property.id)
-                  ? player.ownedSpaces
-                  : [...player.ownedSpaces, property.id],
-              }
-            : player,
-        ),
-        properties: prevState.properties.map((p) =>
-          p.id === property.id ? { ...p, ownedBy: playerRef.id } : p,
-        ),
-      };
+    if (!property.price) {
+      console.log("PropertyCard: No price defined for this property");
+      return null;
+    }
+
+    if (playerRef.balance < property.price) {
+      alert("You do not have enough funds to purchase this property.");
+      return;
+    }
+
+    if (!socket) {
+      console.log("PropertyCard: No socket connection");
+      return null;
+    }
+
+    console.log(
+      "CAN PURCHASE PROPERTY:",
+      property.name,
+      "for player",
+      playerRef.name,
+    );
+
+    socket.emit("purchase-property", {
+      gameId,
+      property,
     });
   }
 
@@ -86,7 +99,7 @@ const PropertyCard = ({
               </button>
             ) : (
               playerRef &&
-              playerRef.id !== property.ownedBy && (
+              !playerRef.ownedSpaces.includes(property.id) && (
                 <button className="btn flex justify-self-center bg-red-700/80 min-w-full border-red-700/90">
                   Pay Rent
                 </button>

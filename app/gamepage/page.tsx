@@ -1,14 +1,7 @@
 // app/page.tsx
 "use client";
 
-import {
-  useMemo,
-  useState,
-  useEffect,
-  useRef,
-  Dispatch,
-  SetStateAction,
-} from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import TokensLayer from "../components/TokensLayer";
 import { BOARD_CELLS, BOARD_LEN } from "../utils/BoardLayout";
@@ -52,26 +45,38 @@ export default function Home() {
   const [playerName, setPlayerName] = useState("");
   const [gameState, setGameState] = useState<GameStateType | null>(null);
   const [isMoving, setIsMoving] = useState(false);
+  const [isPlayerTurn, setIsPlayerTurn] = useState(false);
 
   const playerRef = useRef<PlayerType | null>(null);
   const selectedToken = useMemo(
     () =>
       gameState?.players.find(
-        (player, index) => index === gameState.playerTurnIndex,
+        (_, index) => index === gameState.playerTurnIndex,
       ) ?? gameState?.players[0],
-    [gameState, selectedPlayerSocketId],
+    [gameState],
   );
 
-  // const landedOnProperty = useMemo(() => {
-  //   if (!selectedToken || !gameState) return null;
-  //   return (
-  //     gameState.properties.find(
-  //       (space) => space.id === selectedToken.position,
-  //     ) ?? null
-  //   );
-  // }, [gameState, selectedToken]);
+  const landedOnProperty = useMemo(() => {
+    if (!selectedToken || !gameState) return null;
+    return (
+      ALL_PROPERTIES.find((space) => space.id === selectedToken.position) ??
+      null
+    );
+  }, [gameState, selectedToken]);
 
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (showWaitingModal) {
+      setIsPlayerTurn(false);
+      return;
+    }
+    setIsPlayerTurn(() => {
+      if (!gameState || !playerRef.current) return false;
+      const currentPlayer = gameState.players[gameState.playerTurnIndex];
+      return currentPlayer.socketId === playerRef.current.socketId;
+    });
+  }, [gameState, showWaitingModal]);
 
   useEffect(() => {
     const action = searchParams.get("action"); // "create" or "join"
@@ -121,54 +126,43 @@ export default function Home() {
     newSocket.on("create-game-confirmation", (response: any) => {
       console.log("Game created:", response.gameId);
       gameIdRef.current = parseInt(response.gameId);
-      setGameState(response.gameState);
       const responseGameState = response.gameState as GameStateType;
       playerRef.current =
         responseGameState.players.find((p) => p.socketId === newSocket.id) ??
         null;
+      setGameState(responseGameState);
       setPlayerCount(responseGameState.playerCount);
     });
 
     newSocket.on("join-game-confirmation", (response: any) => {
       console.log("Joined game:", response.gameId);
       gameIdRef.current = parseInt(response.gameId);
-      setGameState(response.gameState);
       setPlayerCount(response.gameState.playerCount);
+      setGameState(response.gameState);
+      playerRef.current =
+        response.gameState.players.find((p) => p.socketId === newSocket.id) ??
+        null;
     });
 
     newSocket.on("game-state-update", (response: any) => {
       console.log("Game state updated:", response.gameState);
       setGameState(response.gameState);
+      playerRef.current =
+        response.gameState.players.find((p) => p.socketId === newSocket.id) ??
+        null;
     });
 
     newSocket.on("game-started", (response: any) => {
       console.log("Game started!");
       setShowWaitingModal(false);
+      console.log("Initial game state:", response.gameState);
+      setGameState(response.gameState);
     });
 
     return () => {
       newSocket.disconnect();
     };
   }, [searchParams]);
-
-  // Initialize game state when playerCount is available
-  // useEffect(() => {
-  //   if (playerCount > 0 && !gameState) {
-  //     const players = Array.from({ length: playerCount }, (_, index) => ({
-  //       id: index,
-  //       color: TOKEN_COLORS[index],
-  //       balance: 1500,
-  //       ownedSpaces: [],
-  //       position: 0,
-  //     }));
-
-  //     setGameState({
-  //       playerTurnIndex: 0,
-  //       properties: ALL_PROPERTIES,
-  //       players,
-  //     });
-  //   }
-  // }, [playerCount, gameState]);
 
   const landedOnPropertyName = selectedToken
     ? (BOARD_CELLS[selectedToken.position]?.space?.name ?? "Unknown")
@@ -264,7 +258,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-board flex items-center justify-center p-4">
       {/* Waiting Room Modal */}
-      {gameState && showWaitingModal && (
+      {showWaitingModal && (
         <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center">
           <div className="max-w-md">
             <WaitingList
@@ -309,12 +303,9 @@ export default function Home() {
                       {/* Left: color + ID */}
                       <div className="flex items-center gap-2">
                         <div
-                          className="h-3 w-3 rounded-full border border-black/40"
-                          style={{ backgroundColor: player.color }}
+                          className={`h-3 w-3 rounded-full border border-black/40 ${player.color}`}
                         />
-                        <span className="font-semibold">
-                          P{player.socketId}
-                        </span>
+                        <span className="font-semibold">{player.socketId}</span>
                       </div>
 
                       {/* Right: stats */}
@@ -332,22 +323,23 @@ export default function Home() {
                 })}
               </div>
             </div>
-            {/* <PlayerStats
-                playerRef={playerRef}
+            {isPlayerTurn && (
+              <PlayerStats
+                playerRef={playerRef.current}
                 socket={socketRef.current}
                 gameId={gameIdRef.current}
-              /> */}
+              />
+            )}
           </div>
 
-          {/* {landedOnProperty && (
-              <PropertyCard
-                setGameState={
-                  setGameState as Dispatch<SetStateAction<GameStateType>>
-                }
-                playerRef={playerRef}
-                property={landedOnProperty}
-              />
-            )} */}
+          {landedOnProperty && isPlayerTurn && !isMoving && (
+            <PropertyCard
+              socket={socketRef.current}
+              gameId={gameIdRef.current}
+              playerRef={playerRef.current}
+              property={landedOnProperty}
+            />
+          )}
 
           <div className="z-[1000] absolute right-1 top-1 w-[min(380px,70vw)] rounded-xl border border-black/30 bg-black/80 shadow-md p-3">
             <div className="flex items-center justify-between gap-2">
@@ -376,31 +368,32 @@ export default function Home() {
               )}
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                className="rounded-md bg-black text-white px-3 py-2 text-sm font-semibold hover:opacity-90 disabled:opacity-60"
-                onClick={rollAndMoveSelected}
-                disabled={!selectedToken || isMoving}
-              >
-                Roll + Move
-              </button>
-              <button
-                className="rounded-md border border-black/30 bg-white px-3 py-2 text-sm font-semibold hover:bg-black/5 disabled:opacity-60"
-                onClick={moveByLastRoll}
-                disabled={!selectedToken || !lastRoll || isMoving}
-              >
-                Move Last Roll
-              </button>
+            {isPlayerTurn && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  className="rounded-md bg-black text-white px-3 py-2 text-sm font-semibold hover:opacity-90 disabled:opacity-60"
+                  onClick={rollAndMoveSelected}
+                  disabled={!selectedToken || isMoving}
+                >
+                  Roll + Move
+                </button>
+                <button
+                  className="rounded-md border border-black/30 bg-white px-3 py-2 text-sm font-semibold hover:bg-black/5 disabled:opacity-60"
+                  onClick={moveByLastRoll}
+                  disabled={!selectedToken || !lastRoll || isMoving}
+                >
+                  Move Last Roll
+                </button>
 
-              <button
-                className="rounded-md border border-black/30 bg-white px-3 py-2 text-sm font-semibold hover:bg-black/5 disabled:opacity-60"
-                onClick={stepSelected}
-                disabled={!selectedToken || isMoving}
-              >
-                Step + 1
-              </button>
-            </div>
-
+                <button
+                  className="rounded-md border border-black/30 bg-white px-3 py-2 text-sm font-semibold hover:bg-black/5 disabled:opacity-60"
+                  onClick={stepSelected}
+                  disabled={!selectedToken || isMoving}
+                >
+                  Step + 1
+                </button>
+              </div>
+            )}
             <div className="mt-3 flex flex-wrap gap-2">
               {gameState.players.map((player) => (
                 <button

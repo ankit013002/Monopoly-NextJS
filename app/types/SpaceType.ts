@@ -14,7 +14,7 @@ export type SpaceType = {
   id: number;
   name: string;
   type: SpaceEnums;
-  price?: string;
+  price?: number;
   group?: Group;
   icon?: string;
   ownedBy?: number;
