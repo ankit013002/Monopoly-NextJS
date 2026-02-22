@@ -31,7 +31,10 @@ const PlayerStats = ({
 
     console.log("PlayerStats: Setting up ping-health-response listener");
 
-    const handlePingResponse = (response: any) => {
+    const handlePingResponse = (response: {
+      message: string;
+      from: string;
+    }) => {
       console.log("PlayerStats: Received ping response:", response);
       console.log(response.message, "from socket:", response.from);
     };

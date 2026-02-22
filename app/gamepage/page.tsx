@@ -104,39 +104,48 @@ export default function Home() {
       }
     });
 
-    newSocket.on("create-game-confirmation", (response: any) => {
-      console.log("Game created:", response.gameId);
-      setGameId(parseInt(response.gameId));
-      const responseGameState = response.gameState as GameStateType;
-      setPlayer(
-        responseGameState.players.find((p) => p.socketId === newSocket.id) ??
-          null,
-      );
-      setGameState(responseGameState);
-      setPlayerCount(responseGameState.playerCount);
-    });
+    newSocket.on(
+      "create-game-confirmation",
+      (response: { gameId: string; gameState: GameStateType }) => {
+        console.log("Game created:", response.gameId);
+        setGameId(parseInt(response.gameId));
+        const responseGameState = response.gameState as GameStateType;
+        setPlayer(
+          responseGameState.players.find((p) => p.socketId === newSocket.id) ??
+            null,
+        );
+        setGameState(responseGameState);
+        setPlayerCount(responseGameState.playerCount);
+      },
+    );
 
-    newSocket.on("join-game-confirmation", (response: any) => {
-      console.log("Joined game:", response.gameId);
-      setGameId(parseInt(response.gameId));
-      setPlayerCount(response.gameState.playerCount);
-      setGameState(response.gameState);
-      setPlayer(
-        response.gameState.players.find((p) => p.socketId === newSocket.id) ??
-          null,
-      );
-    });
+    newSocket.on(
+      "join-game-confirmation",
+      (response: { gameId: string; gameState: GameStateType }) => {
+        console.log("Joined game:", response.gameId);
+        setGameId(parseInt(response.gameId));
+        setPlayerCount(response.gameState.playerCount);
+        setGameState(response.gameState);
+        setPlayer(
+          response.gameState.players.find((p) => p.socketId === newSocket.id) ??
+            null,
+        );
+      },
+    );
 
-    newSocket.on("game-state-update", (response: any) => {
-      console.log("Game state updated:", response.gameState);
-      setGameState(response.gameState);
-      setPlayer(
-        response.gameState.players.find((p) => p.socketId === newSocket.id) ??
-          null,
-      );
-    });
+    newSocket.on(
+      "game-state-update",
+      (response: { gameState: GameStateType }) => {
+        console.log("Game state updated:", response.gameState);
+        setGameState(response.gameState);
+        setPlayer(
+          response.gameState.players.find((p) => p.socketId === newSocket.id) ??
+            null,
+        );
+      },
+    );
 
-    newSocket.on("game-started", (response: any) => {
+    newSocket.on("game-started", (response: { gameState: GameStateType }) => {
       console.log("Game started!");
       setShowWaitingModal(false);
       console.log("Initial game state:", response.gameState);

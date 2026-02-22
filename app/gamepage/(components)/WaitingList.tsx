@@ -1,7 +1,8 @@
 "use client";
 
 import { GameStateType } from "@/app/types/GameStateType";
-import { useEffect, useState } from "react";
+import { PlayerType } from "@/app/types/PlayerType";
+import { useEffect, useMemo } from "react";
 import { FaCheck } from "react-icons/fa";
 
 interface WaitingList {
@@ -17,32 +18,24 @@ const WaitingList = ({
   gameId,
   gameState,
 }: WaitingList) => {
-  const [players, setPlayers] = useState<
+  const players = useMemo<
     Array<{ name: string; inGame: boolean } | undefined>
-  >([]);
-
-  // Update players when gameState or playerCount changes
-  useEffect(() => {
+  >(() => {
     if (gameState && gameState.players) {
-      const newPlayers = gameState.players.map((player: any) => ({
-        name: player.name,
-        inGame: true,
-      }));
+      const newPlayers: Array<{ name: string; inGame: boolean } | undefined> =
+        gameState.players.map((player: PlayerType) => ({
+          name: player.name,
+          inGame: true,
+        }));
       while (newPlayers.length < gameState.playerCount) {
         newPlayers.push(undefined);
       }
-      setPlayers(newPlayers);
-      console.log("WaitingList: Updated players from gameState", newPlayers);
+      return newPlayers;
     } else if (playerCount > 0) {
       // Initialize with empty slots when no gameState yet
-      const emptyPlayers = Array.from({ length: playerCount }, () => undefined);
-      setPlayers(emptyPlayers);
-      console.log(
-        "WaitingList: Initialized empty slots for",
-        playerCount,
-        "players",
-      );
+      return Array.from({ length: playerCount }, () => undefined);
     }
+    return [];
   }, [gameState, playerCount]);
 
   useEffect(() => {
@@ -53,19 +46,12 @@ const WaitingList = ({
 
     console.log("WaitingList: Setting up game-state-update listener");
 
-    const handleGameStateUpdate = (response: any) => {
+    const handleGameStateUpdate = (response: { gameState: GameStateType }) => {
       console.log(
         "WaitingList: Received game-state-update",
         response.gameState,
       );
-      const newPlayers = response.gameState.players.map((player: any) => ({
-        name: player.name,
-        inGame: true,
-      }));
-      while (newPlayers.length < response.gameState.playerCount) {
-        newPlayers.push(undefined);
-      }
-      setPlayers(newPlayers);
+      // Players will be updated via useMemo when gameState prop changes
     };
 
     socket.on("game-state-update", handleGameStateUpdate);
