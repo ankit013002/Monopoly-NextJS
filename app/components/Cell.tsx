@@ -1,6 +1,6 @@
 import { Edge } from "../types/EdgeType";
 import { Group } from "../types/GroupType";
-import { Space } from "../types/SpaceType";
+import { SpaceType } from "../types/SpaceType";
 import { GROUP_STRIPE } from "../utils/Groups";
 
 function Stripe({ edge, group }: { edge: Edge; group: Group }) {
@@ -26,7 +26,7 @@ export function Cell({
   rowSpan,
   isCorner = false,
 }: {
-  space: Space;
+  space: SpaceType;
   edge: Edge;
   rotate?: 0 | 90 | 180 | -90;
   gridColumn: number;
@@ -88,14 +88,14 @@ export function Cell({
               {space.price
                 ? space.price
                 : isDeck
-                ? "DRAW"
-                : isTax
-                ? "PAY"
-                : isRR
-                ? "RR"
-                : isUtil
-                ? "UTIL"
-                : ""}
+                  ? "DRAW"
+                  : isTax
+                    ? "PAY"
+                    : isRR
+                      ? "RR"
+                      : isUtil
+                        ? "UTIL"
+                        : ""}
             </div>
           </div>
         </div>

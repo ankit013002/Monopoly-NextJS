@@ -1,7 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction } from "react";
-import { GameStateType } from "../types/GameStateType";
+import { useMemo, useState } from "react";
 import { PlayerType } from "../types/PlayerType";
 import { SpaceType } from "../types/SpaceType";
 import { GROUP_STRIPE } from "../utils/Groups";
@@ -9,23 +8,33 @@ import { GROUP_STRIPE } from "../utils/Groups";
 interface PropertyCardPropsType {
   socket: SocketIOClient.Socket | null;
   gameId: number | null;
+  allProperties: SpaceType[];
   playerRef: PlayerType | null;
-  property: SpaceType;
+  propertyId: number;
 }
 
 const PropertyCard = ({
   socket,
   gameId,
+  allProperties,
   playerRef,
-  property,
+  propertyId,
 }: PropertyCardPropsType) => {
+  const property = useMemo<SpaceType | null>(() => {
+    if (!propertyId && !allProperties) {
+      return null;
+    }
+
+    return allProperties.find((prop) => prop.id === propertyId) ?? null;
+  }, [allProperties, propertyId]);
+
   function purchaseProperty() {
     if (!playerRef) {
       console.log("PropertyCard: No playerRef provided");
       return null;
     }
 
-    if (!property.price) {
+    if (!property || !property.price) {
       console.log("PropertyCard: No price defined for this property");
       return null;
     }
@@ -53,7 +62,7 @@ const PropertyCard = ({
     });
   }
 
-  console.log(property.ownedBy);
+  console.log(property?.ownedBy);
 
   return (
     <div className="absolute right-1 bottom-3 z-900">
@@ -90,7 +99,7 @@ const PropertyCard = ({
             </div>
 
             <div className="h-px bg-black my-2" />
-            {property.ownedBy == undefined ? (
+            {property?.ownedBy == undefined ? (
               <button
                 onClick={() => purchaseProperty()}
                 className="btn flex justify-self-center bg-green-700/80 min-w-full border-green-700/90"
@@ -99,7 +108,7 @@ const PropertyCard = ({
               </button>
             ) : (
               playerRef &&
-              !playerRef.ownedSpaces.includes(property.id) && (
+              playerRef.socketId !== property.ownedBy && (
                 <button className="btn flex justify-self-center bg-red-700/80 min-w-full border-red-700/90">
                   Pay Rent
                 </button>

@@ -17,5 +17,5 @@ export type SpaceType = {
   price?: number;
   group?: Group;
   icon?: string;
-  ownedBy?: number;
+  ownedBy?: string;
 };

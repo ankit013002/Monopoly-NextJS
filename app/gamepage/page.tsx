@@ -15,7 +15,6 @@ import {
   TOP_PROPERTIES,
 } from "../utils/Properties";
 import BoardCenter from "../components/BoardCenter";
-import { TOKEN_COLORS } from "../utils/TokenColors";
 import { redirect, useSearchParams } from "next/navigation";
 import { GameStateType } from "../types/GameStateType";
 import PropertyCard from "../components/PropertyCard";
@@ -56,12 +55,13 @@ export default function Home() {
     [gameState],
   );
 
-  const landedOnProperty = useMemo(() => {
+  const landedOnPropertyId = useMemo(() => {
     if (!selectedToken || !gameState) return null;
     return (
-      ALL_PROPERTIES.find((space) => space.id === selectedToken.position) ??
-      null
-    );
+      gameState.allProperties.find(
+        (space) => space.id === selectedToken.position,
+      ) ?? null
+    )?.id;
   }, [gameState, selectedToken]);
 
   const searchParams = useSearchParams();
@@ -113,6 +113,7 @@ export default function Home() {
         newSocket.emit("create-game", {
           player: name,
           playerCount: count,
+          allProperties: ALL_PROPERTIES,
         });
       } else if (action === "join" && gameIdParam) {
         console.log("GamePage: Joining game", gameIdParam);
@@ -182,7 +183,9 @@ export default function Home() {
       console.error(`Invalid space: ${spaceId}`);
       return null;
     }
-    const property = ALL_PROPERTIES.find((space) => space.id === spaceId);
+    const property = gameState?.allProperties.find(
+      (space) => space.id === spaceId,
+    );
     if (!property) {
       console.error(`Invalid Property: ${spaceId}`);
       return null;
@@ -258,7 +261,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-board flex items-center justify-center p-4">
       {/* Waiting Room Modal */}
-      {showWaitingModal && (
+      {gameState && showWaitingModal && (
         <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center">
           <div className="max-w-md">
             <WaitingList
@@ -332,12 +335,13 @@ export default function Home() {
             )}
           </div>
 
-          {landedOnProperty && isPlayerTurn && !isMoving && (
+          {landedOnPropertyId && isPlayerTurn && !isMoving && (
             <PropertyCard
               socket={socketRef.current}
               gameId={gameIdRef.current}
+              allProperties={gameState.allProperties}
               playerRef={playerRef.current}
-              property={landedOnProperty}
+              propertyId={landedOnPropertyId}
             />
           )}
 

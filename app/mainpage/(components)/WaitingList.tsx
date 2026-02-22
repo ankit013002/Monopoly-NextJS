@@ -1,8 +1,7 @@
 "use client";
 
 import { GameStateType } from "@/app/types/GameStateType";
-import { redirect } from "next/navigation";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 
 interface WaitingList {
