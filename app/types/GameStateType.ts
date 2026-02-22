@@ -1,9 +1,9 @@
 import { PlayerType } from "./PlayerType";
-import { SpaceType } from "./SpaceType";
+import { AllPropertiesType, SpaceType } from "./SpaceType";
 
 export type GameStateType = {
   playerCount: number;
   playerTurnIndex: number;
-  allProperties: SpaceType[];
+  allProperties: AllPropertiesType;
   players: PlayerType[];
 };

@@ -1,15 +1,21 @@
 import { useEffect } from "react";
 import { PlayerType } from "../types/PlayerType";
 import { BOARD_CELLS } from "../utils/BoardLayout";
-import { ALL_PROPERTIES } from "../utils/Properties";
+import { AllPropertiesType } from "../types/SpaceType";
 
 interface PlayerStatsProps {
   playerRef: PlayerType | null;
   socket: SocketIOClient.Socket | null;
   gameId: number | null;
+  allProperties: AllPropertiesType;
 }
 
-const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
+const PlayerStats = ({
+  playerRef,
+  socket,
+  gameId,
+  allProperties,
+}: PlayerStatsProps) => {
   console.log(playerRef, "PlayerStats: Received playerRef");
 
   useEffect(() => {
@@ -107,7 +113,9 @@ const PlayerStats = ({ playerRef, socket, gameId }: PlayerStatsProps) => {
               <div className="text-xs font-semibold mb-1">Owned Spaces</div>
               <div className="max-h-24 overflow-y-auto rounded-md border border-white/10 bg-white/5 p-1">
                 {playerRef.ownedSpaces.map((spaceId) => {
-                  const space = ALL_PROPERTIES.find((p) => p.id === spaceId);
+                  const space = Object.values(allProperties)
+                    .flat()
+                    .find((p) => p.id === spaceId);
                   return (
                     <div
                       key={spaceId}

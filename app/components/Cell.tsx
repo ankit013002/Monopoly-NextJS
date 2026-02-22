@@ -40,10 +40,10 @@ export function Cell({
   const isTax = space.type === "tax";
   const isRR = space.type === "railroad";
   const isUtil = space.type === "utility";
-
+  console.log(space.ownedBy?.color);
   return (
     <div
-      className="relative border  border-black/40 bg-white/80"
+      className={`relative border  border-black/40 ${space.ownedBy ? `bg-${space.ownedBy.color}` : "bg-white/80"}`}
       style={{
         gridColumn: `${gridColumn} / span ${colSpan}`,
         gridRow: `${gridRow} / span ${rowSpan}`,

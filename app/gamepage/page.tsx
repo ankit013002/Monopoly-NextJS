@@ -58,13 +58,15 @@ export default function Home() {
   const landedOnPropertyId = useMemo(() => {
     if (!selectedToken || !gameState) return null;
     return (
-      gameState.allProperties.find(
-        (space) => space.id === selectedToken.position,
-      ) ?? null
+      Object.values(gameState.allProperties)
+        .flat()
+        .find((space) => space.id === selectedToken.position) ?? null
     )?.id;
   }, [gameState, selectedToken]);
 
   const searchParams = useSearchParams();
+
+  console.log("All properties:", gameState?.allProperties);
 
   useEffect(() => {
     if (showWaitingModal) {
@@ -183,9 +185,13 @@ export default function Home() {
       console.error(`Invalid space: ${spaceId}`);
       return null;
     }
-    const property = gameState?.allProperties.find(
-      (space) => space.id === spaceId,
-    );
+    if (!gameState?.allProperties) {
+      console.error("Game properties are not loaded yet.");
+      return null;
+    }
+    const property = Object.values(gameState.allProperties)
+      .flat()
+      .find((space) => space.id === spaceId);
     if (!property) {
       console.error(`Invalid Property: ${spaceId}`);
       return null;
@@ -308,7 +314,7 @@ export default function Home() {
                         <div
                           className={`h-3 w-3 rounded-full border border-black/40 ${player.color}`}
                         />
-                        <span className="font-semibold">{player.socketId}</span>
+                        <span className="font-semibold">{player.name}</span>
                       </div>
 
                       {/* Right: stats */}
@@ -331,10 +337,12 @@ export default function Home() {
                 playerRef={playerRef.current}
                 socket={socketRef.current}
                 gameId={gameIdRef.current}
+                allProperties={gameState.allProperties}
               />
             )}
           </div>
 
+          {/* TODO: Need to avoid allowing player to buy property when their turn starts */}
           {landedOnPropertyId && isPlayerTurn && !isMoving && (
             <PropertyCard
               socket={socketRef.current}
@@ -353,7 +361,7 @@ export default function Home() {
             <div className="mt-2 flex items-center justify-between gap-2">
               <div className="text-sm">
                 <div className="font-semibold">
-                  Selected: {selectedToken?.socketId ?? "-"}
+                  Selected: {selectedToken?.name ?? "-"}
                 </div>
                 <div className="text-xs opacity-80">
                   On: {landedOnPropertyName}
@@ -460,7 +468,7 @@ export default function Home() {
                 />
 
                 {/* Top edge (row 1-2, col 3-11) left->right */}
-                {TOP_PROPERTIES.map((space, i) => (
+                {gameState.allProperties.topProperties.map((space, i) => (
                   <Cell
                     key={`top-${i}`}
                     space={space}
@@ -474,7 +482,7 @@ export default function Home() {
                 ))}
 
                 {/* Bottom edge (row 12-13, col 3-11) left->right */}
-                {BOTTOM_PROPERTIES.map((space, i) => (
+                {gameState.allProperties.bottomProperties.map((space, i) => (
                   <Cell
                     key={`bottom-${i}`}
                     space={space}
@@ -488,7 +496,7 @@ export default function Home() {
                 ))}
 
                 {/* Left edge (col 1-2, row 3-11) top->bottom */}
-                {LEFT_PROPERTIES.map((space, i) => (
+                {gameState.allProperties.leftProperties.map((space, i) => (
                   <Cell
                     key={`left-${i}`}
                     space={space}
@@ -502,7 +510,7 @@ export default function Home() {
                 ))}
 
                 {/* Right edge (col 12-13, row 3-11) top->bottom */}
-                {RIGHT_PROPERTIES.map((space, i) => (
+                {gameState.allProperties.rightProperties.map((space, i) => (
                   <Cell
                     key={`right-${i}`}
                     space={space}

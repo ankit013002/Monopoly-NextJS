@@ -49,18 +49,18 @@ export default function TokensLayer({
                     e.stopPropagation();
                     onSelect(t.socketId);
                   }}
-                  title={`${t.socketId} @ ${cell.space.name}`}
+                  title={`${t.name} @ ${cell.space.name}`}
                   className={[
                     "pointer-events-auto",
                     "w-5 h-5 md:w-7 md:h-7",
                     "rounded-full border border-black/60 shadow-sm",
                     "flex items-center justify-center",
                     "text-[10px] md:text-xs font-bold text-white",
-                    t.color,
+                    `bg-${t.color}`,
                     selectedId === t.socketId ? "ring-2 ring-black/80" : "",
                   ].join(" ")}
                 >
-                  {t.socketId}
+                  {t.name}
                 </button>
               ))}
             </div>

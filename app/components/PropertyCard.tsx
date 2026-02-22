@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { PlayerType } from "../types/PlayerType";
-import { SpaceType } from "../types/SpaceType";
+import { AllPropertiesType, SpaceType } from "../types/SpaceType";
 import { GROUP_STRIPE } from "../utils/Groups";
 
 interface PropertyCardPropsType {
   socket: SocketIOClient.Socket | null;
   gameId: number | null;
-  allProperties: SpaceType[];
+  allProperties: AllPropertiesType;
   playerRef: PlayerType | null;
   propertyId: number;
 }
@@ -25,7 +25,11 @@ const PropertyCard = ({
       return null;
     }
 
-    return allProperties.find((prop) => prop.id === propertyId) ?? null;
+    return (
+      Object.values(allProperties)
+        .flat()
+        .find((prop) => prop.id === propertyId) ?? null
+    );
   }, [allProperties, propertyId]);
 
   function purchaseProperty() {
@@ -108,7 +112,7 @@ const PropertyCard = ({
               </button>
             ) : (
               playerRef &&
-              playerRef.socketId !== property.ownedBy && (
+              playerRef.socketId !== property.ownedBy.socketId && (
                 <button className="btn flex justify-self-center bg-red-700/80 min-w-full border-red-700/90">
                   Pay Rent
                 </button>

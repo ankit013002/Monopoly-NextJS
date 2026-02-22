@@ -1,4 +1,4 @@
-import { SpaceType } from "../types/SpaceType";
+import { AllPropertiesType, SpaceType } from "../types/SpaceType";
 import { CORNERS_ARRAY } from "./Corners";
 
 export const BOTTOM_PROPERTIES: SpaceType[] = [
@@ -199,10 +199,10 @@ export const RIGHT_PROPERTIES: SpaceType[] = [
   },
 ];
 
-export const ALL_PROPERTIES = [
-  ...BOTTOM_PROPERTIES,
-  ...TOP_PROPERTIES,
-  ...LEFT_PROPERTIES,
-  ...RIGHT_PROPERTIES,
-  ...CORNERS_ARRAY,
-];
+export const ALL_PROPERTIES: AllPropertiesType = {
+  bottomProperties: BOTTOM_PROPERTIES,
+  topProperties: TOP_PROPERTIES,
+  leftProperties: LEFT_PROPERTIES,
+  rightProperties: RIGHT_PROPERTIES,
+  corners: CORNERS_ARRAY,
+};
