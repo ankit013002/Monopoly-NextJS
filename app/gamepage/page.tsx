@@ -7,29 +7,25 @@ import TokensLayer from "../components/TokensLayer";
 import { BOARD_CELLS, BOARD_LEN } from "../utils/BoardLayout";
 import { Cell } from "../components/Cell";
 import { CORNERS } from "../utils/Corners";
-import {
-  ALL_PROPERTIES,
-  BOTTOM_PROPERTIES,
-  LEFT_PROPERTIES,
-  RIGHT_PROPERTIES,
-  TOP_PROPERTIES,
-} from "../utils/Properties";
+import { ALL_PROPERTIES } from "../utils/Properties";
 import BoardCenter from "../components/BoardCenter";
 import { redirect, useSearchParams } from "next/navigation";
 import { GameStateType } from "../types/GameStateType";
 import PropertyCard from "../components/PropertyCard";
 import PlayerStats from "../components/PlayerStats";
-import WaitingList from "../mainpage/(components)/WaitingList";
+import WaitingList from "./(components)/WaitingList";
 import { PlayerType } from "../types/PlayerType";
+import DiceRoller from "../components/DiceRoller";
+// import MovementDev from "../components/MovementDev";
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
 export default function Home() {
-  const gameIdRef = useRef<number | null>(null);
+  const [gameId, setGameId] = useState<number | null>(null);
   const serverUrlRef = useRef<string>("");
-  const socketRef = useRef<SocketIOClient.Socket | null>(null);
+  const [socket, setSocket] = useState<SocketIOClient.Socket | null>(null);
   const [selectedPlayerSocketId, setSelectedPlayerSocketId] =
     useState<string>("");
   const [lastRoll, setLastRoll] = useState<{
@@ -41,12 +37,15 @@ export default function Home() {
   // Waiting room state
   const [showWaitingModal, setShowWaitingModal] = useState(true);
   const [playerCount, setPlayerCount] = useState(0);
-  const [playerName, setPlayerName] = useState("");
   const [gameState, setGameState] = useState<GameStateType | null>(null);
   const [isMoving, setIsMoving] = useState(false);
-  const [isPlayerTurn, setIsPlayerTurn] = useState(false);
-
-  const playerRef = useRef<PlayerType | null>(null);
+  const [player, setPlayer] = useState<PlayerType | null>(null);
+  const isPlayerTurn = useMemo(() => {
+    if (!gameState || !player) return false;
+    const currentPlayer = gameState.players[gameState.playerTurnIndex];
+    if (!currentPlayer || !currentPlayer.socketId) return false;
+    return currentPlayer.socketId === player.socketId;
+  }, [gameState, player]);
   const selectedToken = useMemo(
     () =>
       gameState?.players.find(
@@ -69,18 +68,6 @@ export default function Home() {
   console.log("All properties:", gameState?.allProperties);
 
   useEffect(() => {
-    if (showWaitingModal) {
-      setIsPlayerTurn(false);
-      return;
-    }
-    setIsPlayerTurn(() => {
-      if (!gameState || !playerRef.current) return false;
-      const currentPlayer = gameState.players[gameState.playerTurnIndex];
-      return currentPlayer.socketId === playerRef.current.socketId;
-    });
-  }, [gameState, showWaitingModal]);
-
-  useEffect(() => {
     const action = searchParams.get("action"); // "create" or "join"
     const name = searchParams.get("playerName");
     const gameIdParam = searchParams.get("gameId");
@@ -93,18 +80,9 @@ export default function Home() {
       redirect("/");
     }
 
-    setPlayerName(name);
-
-    // Set playerCount immediately for creators
-    if (action === "create" && playerCountParam) {
-      const count = parseInt(playerCountParam);
-      setPlayerCount(count);
-      console.log("GamePage: Player count set to", count);
-    }
-
     console.log("GamePage: Creating socket connection");
     const newSocket = io(serverUrlRef.current);
-    socketRef.current = newSocket;
+    setSocket(newSocket);
 
     newSocket.on("connect", () => {
       console.log("GamePage: Socket connected with ID:", newSocket.id);
@@ -128,31 +106,34 @@ export default function Home() {
 
     newSocket.on("create-game-confirmation", (response: any) => {
       console.log("Game created:", response.gameId);
-      gameIdRef.current = parseInt(response.gameId);
+      setGameId(parseInt(response.gameId));
       const responseGameState = response.gameState as GameStateType;
-      playerRef.current =
+      setPlayer(
         responseGameState.players.find((p) => p.socketId === newSocket.id) ??
-        null;
+          null,
+      );
       setGameState(responseGameState);
       setPlayerCount(responseGameState.playerCount);
     });
 
     newSocket.on("join-game-confirmation", (response: any) => {
       console.log("Joined game:", response.gameId);
-      gameIdRef.current = parseInt(response.gameId);
+      setGameId(parseInt(response.gameId));
       setPlayerCount(response.gameState.playerCount);
       setGameState(response.gameState);
-      playerRef.current =
+      setPlayer(
         response.gameState.players.find((p) => p.socketId === newSocket.id) ??
-        null;
+          null,
+      );
     });
 
     newSocket.on("game-state-update", (response: any) => {
       console.log("Game state updated:", response.gameState);
       setGameState(response.gameState);
-      playerRef.current =
+      setPlayer(
         response.gameState.players.find((p) => p.socketId === newSocket.id) ??
-        null;
+          null,
+      );
     });
 
     newSocket.on("game-started", (response: any) => {
@@ -170,14 +151,6 @@ export default function Home() {
   const landedOnPropertyName = selectedToken
     ? (BOARD_CELLS[selectedToken.position]?.space?.name ?? "Unknown")
     : "Unknown";
-
-  function roll2d6() {
-    const d1 = 1 + Math.floor(Math.random() * 6);
-    const d2 = 1 + Math.floor(Math.random() * 6);
-    const total = d1 + d2;
-    setLastRoll({ d1, d2, total });
-    return total;
-  }
 
   async function playerTurn(socketId: string, steps: number) {
     const spaceId = await moveTokenSteps(socketId, steps);
@@ -206,14 +179,6 @@ export default function Home() {
     for (let i = 0; i < steps; i++) {
       setGameState((prev) => {
         const prevPlayers = prev?.players;
-        console.log(
-          "Moving token for socket",
-          socketId,
-          "Step",
-          i + 1,
-          "of",
-          steps,
-        );
         if (!prevPlayers) {
           return prev;
         }
@@ -230,38 +195,16 @@ export default function Home() {
           }
         });
         const newGameState = { ...prev, players };
-        console.log("Emitting game state update for move:", newGameState);
-        socketRef.current?.emit("move-token", {
-          gameId: gameIdRef.current,
+        socket?.emit("move-token", {
+          gameId: gameId,
           newGameState,
         });
         return newGameState;
       });
-      // socketRef.current?.emit("move-token", {
-      //   gameId: gameIdRef.current,
-      //   socketId,
-      //   steps: 1,
-      // });
       await sleep(120);
     }
     setIsMoving(false);
     return landedOnSpaceId;
-  }
-
-  function stepSelected() {
-    if (!selectedToken) return;
-    void playerTurn(selectedToken.socketId, 1);
-  }
-
-  function rollAndMoveSelected() {
-    if (!selectedToken) return;
-    const steps = roll2d6();
-    void playerTurn(selectedToken.socketId, steps);
-  }
-
-  function moveByLastRoll() {
-    if (!selectedToken || !lastRoll) return;
-    void moveTokenSteps(selectedToken.socketId, lastRoll.total);
   }
 
   return (
@@ -271,10 +214,9 @@ export default function Home() {
         <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center">
           <div className="max-w-md">
             <WaitingList
-              playerName={playerName}
               playerCount={playerCount}
-              socket={socketRef.current}
-              gameId={gameIdRef.current}
+              socket={socket}
+              gameId={gameId}
               gameState={gameState}
             />
           </div>
@@ -312,7 +254,7 @@ export default function Home() {
                       {/* Left: color + ID */}
                       <div className="flex items-center gap-2">
                         <div
-                          className={`h-3 w-3 rounded-full border border-black/40 ${player.color}`}
+                          className={`h-3 w-3 rounded-full border border-black/40 bg-${player.color}`}
                         />
                         <span className="font-semibold">{player.name}</span>
                       </div>
@@ -334,9 +276,9 @@ export default function Home() {
             </div>
             {isPlayerTurn && (
               <PlayerStats
-                playerRef={playerRef.current}
-                socket={socketRef.current}
-                gameId={gameIdRef.current}
+                playerRef={player}
+                socket={socket}
+                gameId={gameId}
                 allProperties={gameState.allProperties}
               />
             )}
@@ -345,10 +287,10 @@ export default function Home() {
           {/* TODO: Need to avoid allowing player to buy property when their turn starts */}
           {landedOnPropertyId && isPlayerTurn && !isMoving && (
             <PropertyCard
-              socket={socketRef.current}
-              gameId={gameIdRef.current}
+              socket={socket}
+              gameId={gameId}
               allProperties={gameState.allProperties}
-              playerRef={playerRef.current}
+              playerRef={player}
               propertyId={landedOnPropertyId}
             />
           )}
@@ -381,30 +323,14 @@ export default function Home() {
             </div>
 
             {isPlayerTurn && (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button
-                  className="rounded-md bg-black text-white px-3 py-2 text-sm font-semibold hover:opacity-90 disabled:opacity-60"
-                  onClick={rollAndMoveSelected}
-                  disabled={!selectedToken || isMoving}
-                >
-                  Roll + Move
-                </button>
-                <button
-                  className="rounded-md border border-black/30 bg-white px-3 py-2 text-sm font-semibold hover:bg-black/5 disabled:opacity-60"
-                  onClick={moveByLastRoll}
-                  disabled={!selectedToken || !lastRoll || isMoving}
-                >
-                  Move Last Roll
-                </button>
-
-                <button
-                  className="rounded-md border border-black/30 bg-white px-3 py-2 text-sm font-semibold hover:bg-black/5 disabled:opacity-60"
-                  onClick={stepSelected}
-                  disabled={!selectedToken || isMoving}
-                >
-                  Step + 1
-                </button>
-              </div>
+              <DiceRoller
+                selectedToken={selectedToken}
+                playerTurn={playerTurn}
+                moveTokenSteps={moveTokenSteps}
+                lastRoll={lastRoll}
+                setLastRoll={setLastRoll}
+                isMoving={isMoving}
+              />
             )}
             <div className="mt-3 flex flex-wrap gap-2">
               {gameState.players.map((player) => (

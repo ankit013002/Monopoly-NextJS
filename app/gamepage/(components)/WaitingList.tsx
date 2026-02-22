@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 
 interface WaitingList {
-  playerName: string;
   playerCount: number;
   socket: SocketIOClient.Socket | null;
   gameId: number | null;
@@ -13,7 +12,6 @@ interface WaitingList {
 }
 
 const WaitingList = ({
-  playerName,
   playerCount,
   socket,
   gameId,
@@ -86,7 +84,7 @@ const WaitingList = ({
     socket.emit("start-game", { gameId });
   };
 
-  const isHost = gameState?.players?.[0]?.name === playerName;
+  const isHost = gameState?.players[0]?.socketId === socket?.id;
   const allPlayersJoined =
     players.length > 0 && players.every((p) => p?.inGame);
 
