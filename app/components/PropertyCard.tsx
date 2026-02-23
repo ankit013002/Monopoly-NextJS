@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { SetStateAction, useEffect, useMemo, useState } from "react";
 import { PlayerType } from "../types/PlayerType";
 import { AllPropertiesType, SpaceType } from "../types/SpaceType";
 import { GROUP_STRIPE } from "../utils/Groups";
@@ -11,6 +11,7 @@ interface PropertyCardPropsType {
   allProperties: AllPropertiesType;
   playerRef: PlayerType | null;
   propertyId: number;
+  setMustPayRent: React.Dispatch<SetStateAction<boolean>>;
 }
 
 const PropertyCard = ({
@@ -19,6 +20,7 @@ const PropertyCard = ({
   allProperties,
   playerRef,
   propertyId,
+  setMustPayRent,
 }: PropertyCardPropsType) => {
   const property = useMemo<SpaceType | null>(() => {
     if (!propertyId && !allProperties) {
@@ -31,6 +33,24 @@ const PropertyCard = ({
         .find((prop) => prop.id === propertyId) ?? null
     );
   }, [allProperties, propertyId]);
+
+  const landedOnPropertyAction = useMemo(() => {
+    if (!property) return null;
+    if (!playerRef) return null;
+    if (property.ownedBy) {
+      if (property.ownedBy.socketId === playerRef.socketId) {
+        return "NOTHING";
+      } else {
+        return "PAY_RENT";
+      }
+    } else {
+      return "BUY";
+    }
+  }, [property, playerRef]);
+
+  useEffect(() => {
+    if (landedOnPropertyAction === "PAY_RENT") setMustPayRent(true);
+  }, [landedOnPropertyAction, setMustPayRent]);
 
   function purchaseProperty() {
     if (!playerRef) {
@@ -61,6 +81,30 @@ const PropertyCard = ({
     );
 
     socket.emit("purchase-property", {
+      gameId,
+      property,
+    });
+  }
+
+  function payRent() {
+    if (!playerRef) {
+      console.log("PropertyCard: No playerRef provided");
+      return null;
+    }
+
+    if (!property || !property.price) {
+      console.log("PropertyCard: No price defined for this property");
+      return null;
+    }
+
+    if (!socket) {
+      console.log("PropertyCard: No socket connection");
+      return null;
+    }
+
+    setMustPayRent(false);
+
+    socket.emit("pay-rent", {
       gameId,
       property,
     });
@@ -103,7 +147,7 @@ const PropertyCard = ({
             </div>
 
             <div className="h-px bg-black my-2" />
-            {property?.ownedBy == undefined ? (
+            {landedOnPropertyAction === "BUY" ? (
               <button
                 onClick={() => purchaseProperty()}
                 className="btn flex justify-self-center bg-green-700/80 min-w-full border-green-700/90"
@@ -111,9 +155,11 @@ const PropertyCard = ({
                 Buy Property
               </button>
             ) : (
-              playerRef &&
-              playerRef.socketId !== property.ownedBy.socketId && (
-                <button className="btn flex justify-self-center bg-red-700/80 min-w-full border-red-700/90">
+              landedOnPropertyAction === "PAY_RENT" && (
+                <button
+                  onClick={() => payRent()}
+                  className="btn flex justify-self-center bg-red-700/80 min-w-full border-red-700/90"
+                >
                   Pay Rent
                 </button>
               )

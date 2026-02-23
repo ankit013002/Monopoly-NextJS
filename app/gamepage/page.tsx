@@ -53,6 +53,7 @@ export default function Home() {
       ) ?? gameState?.players[0],
     [gameState],
   );
+  const [mustPayRent, setMustPayRent] = useState(false);
 
   const landedOnPropertyId = useMemo(() => {
     if (!selectedToken || !gameState) return null;
@@ -289,28 +290,32 @@ export default function Home() {
                 socket={socket}
                 gameId={gameId}
                 allProperties={gameState.allProperties}
+                lastRoll={lastRoll}
+                setLastRoll={setLastRoll}
+                mustPayRent={mustPayRent}
               />
             )}
           </div>
 
           {/* TODO: Need to avoid allowing player to buy property when their turn starts */}
-          {landedOnPropertyId && isPlayerTurn && !isMoving && (
+          {landedOnPropertyId && isPlayerTurn && !isMoving && lastRoll && (
             <PropertyCard
               socket={socket}
               gameId={gameId}
               allProperties={gameState.allProperties}
               playerRef={player}
               propertyId={landedOnPropertyId}
+              setMustPayRent={setMustPayRent}
             />
           )}
 
-          <div className="z-[1000] absolute right-1 top-1 w-[min(380px,70vw)] rounded-xl border border-black/30 bg-black/80 shadow-md p-3">
+          <div className="z-[1000] absolute right-1 top-1 w-[min(380px,70vw)] rounded-xl border border-white/20 bg-black/90 backdrop-blur-sm shadow-lg p-4">
             <div className="flex items-center justify-between gap-2">
-              <div className="font-bold text-sm">Players</div>
+              <div className="font-bold text-sm text-white">Players</div>
               <div className="flex items-center gap-2"></div>
             </div>
             <div className="mt-2 flex items-center justify-between gap-2">
-              <div className="text-sm">
+              <div className="text-sm text-white">
                 <div className="font-semibold">
                   Selected: {selectedToken?.name ?? "-"}
                 </div>
@@ -320,45 +325,32 @@ export default function Home() {
               </div>
 
               {lastRoll ? (
-                <div className="text-right text-xs">
+                <div className="text-right text-xs text-white">
                   <div className="font-semibold">Last roll</div>
                   <div>
                     {lastRoll.d1} + {lastRoll.d2} = {lastRoll.total}
                   </div>
                 </div>
               ) : (
-                <div className="text-right text-xs opacity-70">No roll yet</div>
+                <div className="text-right text-xs opacity-70 text-white">
+                  No roll yet
+                </div>
               )}
             </div>
-
-            {isPlayerTurn && (
-              <DiceRoller
-                selectedToken={selectedToken}
-                playerTurn={playerTurn}
-                moveTokenSteps={moveTokenSteps}
-                lastRoll={lastRoll}
-                setLastRoll={setLastRoll}
-                isMoving={isMoving}
-              />
+            <hr className="my-3 border-white/20" />
+            {isPlayerTurn && !lastRoll && (
+              <div className="my-3 p-3 bg-white/10 rounded-lg border border-white/10">
+                <DiceRoller
+                  selectedToken={selectedToken}
+                  playerTurn={playerTurn}
+                  moveTokenSteps={moveTokenSteps}
+                  lastRoll={lastRoll}
+                  setLastRoll={setLastRoll}
+                  isMoving={isMoving}
+                />
+              </div>
             )}
-            <div className="mt-3 flex flex-wrap gap-2">
-              {gameState.players.map((player) => (
-                <button
-                  key={player.socketId}
-                  onClick={() => setSelectedPlayerSocketId(player.socketId)}
-                  className={[
-                    "rounded-full px-3 py-1 text-xs font-semibold border border-black/30",
-                    "hover:bg-black/5",
-                    selectedPlayerSocketId === player.socketId
-                      ? "bg-black/10"
-                      : "bg-white",
-                  ].join(" ")}
-                  disabled={isMoving}
-                >
-                  {player.name}
-                </button>
-              ))}
-            </div>
+            <hr className="my-3 border-white/20" />
           </div>
 
           <div className="w-[min(92vw,92vh)] max-w-[980px] aspect-square">

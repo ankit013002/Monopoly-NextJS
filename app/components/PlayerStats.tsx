@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { PlayerType } from "../types/PlayerType";
 import { BOARD_CELLS } from "../utils/BoardLayout";
 import { AllPropertiesType } from "../types/SpaceType";
@@ -8,6 +8,15 @@ interface PlayerStatsProps {
   socket: SocketIOClient.Socket | null;
   gameId: number | null;
   allProperties: AllPropertiesType;
+  lastRoll: { d1: number; d2: number; total: number } | null;
+  setLastRoll: Dispatch<
+    SetStateAction<{
+      d1: number;
+      d2: number;
+      total: number;
+    } | null>
+  >;
+  mustPayRent: boolean;
 }
 
 const PlayerStats = ({
@@ -15,6 +24,9 @@ const PlayerStats = ({
   socket,
   gameId,
   allProperties,
+  lastRoll,
+  setLastRoll,
+  mustPayRent,
 }: PlayerStatsProps) => {
   console.log(playerRef, "PlayerStats: Received playerRef");
 
@@ -52,6 +64,8 @@ const PlayerStats = ({
       console.log("PlayerStats: Cannot end turn - no socket");
       return;
     }
+
+    setLastRoll(null);
 
     socket.emit("end-turn", {
       gameId,
@@ -138,7 +152,11 @@ const PlayerStats = ({
           <div className="flex flex-col p-3 gap-2">
             <button className="btn">Trade a Property</button>
             <button className="btn">Auction a Property</button>
-            <button className="btn bg-red-700" onClick={() => endTurn()}>
+            <button
+              disabled={mustPayRent || !lastRoll}
+              className="btn bg-red-700"
+              onClick={() => endTurn()}
+            >
               End Turn
             </button>
             <button onClick={() => pingServer()} className="btn bg-red-700">

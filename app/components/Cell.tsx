@@ -40,7 +40,8 @@ export function Cell({
   const isTax = space.type === "tax";
   const isRR = space.type === "railroad";
   const isUtil = space.type === "utility";
-  console.log(space.ownedBy?.color);
+  console.log("Space:", space);
+  console.log("Space color:", space.ownedBy?.color);
   return (
     <div
       className={`relative border  border-black/40 ${space.ownedBy ? `bg-${space.ownedBy.color}` : "bg-white/80"}`}
