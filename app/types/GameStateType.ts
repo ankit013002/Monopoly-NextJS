@@ -1,9 +1,11 @@
+import { lastRollType } from "./lastRollType";
 import { PlayerType } from "./PlayerType";
-import { AllPropertiesType, SpaceType } from "./SpaceType";
+import { AllPropertiesType } from "./SpaceType";
 
 export type GameStateType = {
   playerCount: number;
   playerTurnIndex: number;
   allProperties: AllPropertiesType;
+  lastRoll: lastRollType;
   players: PlayerType[];
 };

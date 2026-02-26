@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, SetStateAction, Dispatch } from "react";
 import { PlayerType } from "../types/PlayerType";
 import { roll2d6 } from "../utils/Movement";
+import { lastRollType } from "../types/lastRollType";
+import { GameStateType } from "../types/GameStateType";
 
 // Pip layout for each die face (positions in a 3x3 grid: tl, tm, tr, ml, mm, mr, bl, bm, br)
 const PIP_LAYOUTS: Record<number, boolean[]> = {
@@ -40,11 +42,11 @@ interface DiceRollerProps {
   selectedToken: PlayerType | undefined;
   playerTurn: (socketId: string, steps: number) => Promise<null | undefined>;
   moveTokenSteps: (socketId: string, steps: number) => Promise<number>;
-  lastRoll: { d1: number; d2: number; total: number } | null;
-  setLastRoll: React.Dispatch<
-    React.SetStateAction<{ d1: number; d2: number; total: number } | null>
-  >;
+  lastRoll: lastRollType;
+  setLastRoll: React.Dispatch<React.SetStateAction<lastRollType>>;
   isMoving: boolean;
+  socket: SocketIOClient.Socket | null;
+  gameId: number | null;
 }
 
 export default function DiceRoller({
@@ -54,11 +56,12 @@ export default function DiceRoller({
   lastRoll,
   setLastRoll,
   isMoving,
+  socket,
+  gameId,
 }: DiceRollerProps) {
   const [d1Display, setD1Display] = useState(1);
   const [d2Display, setD2Display] = useState(1);
   const [rolling, setRolling] = useState(false);
-  const [hasRolled, setHasRolled] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -67,13 +70,17 @@ export default function DiceRoller({
 
     const result = roll2d6();
     setRolling(true);
-    setHasRolled(false);
 
     // Animate: rapidly cycle random faces
     intervalRef.current = setInterval(() => {
       setD1Display(1 + Math.floor(Math.random() * 6));
       setD2Display(1 + Math.floor(Math.random() * 6));
     }, 80);
+
+    socket?.emit("dice-roll", {
+      gameId: gameId,
+      diceRoll: result,
+    });
 
     // After 900ms, stop and show result
     timeoutRef.current = setTimeout(() => {
@@ -82,14 +89,9 @@ export default function DiceRoller({
       setD2Display(result.d2);
       setLastRoll(result);
       setRolling(false);
-      setHasRolled(true);
+
       void playerTurn(selectedToken.socketId, result.total);
     }, 900);
-  };
-
-  const moveAgain = () => {
-    if (!selectedToken || !lastRoll || isMoving) return;
-    void moveTokenSteps(selectedToken.socketId, lastRoll.total);
   };
 
   // Cleanup on unmount
@@ -100,7 +102,7 @@ export default function DiceRoller({
     };
   }, []);
 
-  const disabled = !selectedToken || rolling || isMoving;
+  const disabled = !selectedToken || rolling || isMoving || lastRoll != null;
 
   return (
     <div className="mt-3 flex flex-col items-center gap-3">
@@ -141,16 +143,6 @@ export default function DiceRoller({
             <span className="opacity-50 italic">Click dice to roll</span>
           )}
         </div>
-
-        {hasRolled && lastRoll && !rolling && !isMoving && (
-          <button
-            onClick={moveAgain}
-            disabled={isMoving}
-            className="text-xs px-2 py-1 rounded-md bg-white/10 hover:bg-white/20 border border-white/20 text-white/80 disabled:opacity-40"
-          >
-            Re-move
-          </button>
-        )}
       </div>
     </div>
   );

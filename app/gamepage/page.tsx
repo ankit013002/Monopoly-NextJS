@@ -17,6 +17,7 @@ import WaitingList from "./(components)/WaitingList";
 import { PlayerType } from "../types/PlayerType";
 import DiceRoller from "../components/DiceRoller";
 import PlayerList from "../components/PlayerList";
+import { lastRollType } from "../types/lastRollType";
 // import MovementDev from "../components/MovementDev";
 
 function sleep(ms: number) {
@@ -29,11 +30,7 @@ export default function Home() {
   const [socket, setSocket] = useState<SocketIOClient.Socket | null>(null);
   const [selectedPlayerSocketId, setSelectedPlayerSocketId] =
     useState<string>("");
-  const [lastRoll, setLastRoll] = useState<{
-    d1: number;
-    d2: number;
-    total: number;
-  } | null>(null);
+  const [lastRoll, setLastRoll] = useState<lastRollType>(null);
 
   // Waiting room state
   const [showWaitingModal, setShowWaitingModal] = useState(true);
@@ -205,7 +202,10 @@ export default function Home() {
             return p;
           }
         });
-        const newGameState = { ...prev, players };
+        const newGameState = {
+          ...prev,
+          players,
+        };
         socket?.emit("move-token", {
           gameId: gameId,
           newGameState,
@@ -222,7 +222,7 @@ export default function Home() {
     <div className="min-h-screen bg-board flex items-center justify-center p-4">
       {/* Waiting Room Modal */}
       {gameState && showWaitingModal && (
-        <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center">
+        <div className="fixed inset-0 z-9999 bg-black/80 flex items-center justify-center">
           <div className="max-w-md">
             <WaitingList
               playerCount={playerCount}
@@ -270,37 +270,36 @@ export default function Home() {
             />
           )}
 
-          <div className="z-[1000] absolute right-1 top-1 w-[min(380px,70vw)] rounded-xl border border-white/20 bg-black/90 backdrop-blur-sm shadow-lg p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="font-bold text-sm text-white">Players</div>
-              <div className="flex items-center gap-2"></div>
+          <div className="z-1000 absolute right-1 top-1 w-[min(280px,40vw)] rounded-lg border border-white/30 bg-linear-to-b from-black/95 to-black/85 backdrop-blur-sm shadow-xl shadow-white/10 p-3">
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="font-semibold text-sm text-white flex items-center gap-2">
+                <span className="text-yellow-400">👥</span>
+                Players
+              </div>
             </div>
-            <div className="mt-2 flex items-center justify-between gap-2">
-              <div className="text-sm text-white">
-                <div className="font-semibold">
-                  Selected: {selectedToken?.name ?? "-"}
+            <div className="flex flex-col gap-2 text-xs text-white">
+              <div className="bg-white/5 rounded-md p-2 border border-white/10">
+                <div className="font-medium text-yellow-300">
+                  {`${selectedToken?.name ?? "-"}'s Turn`}
                 </div>
-                <div className="text-xs opacity-80">
+                <div className="text-xs opacity-80 mt-1">
                   On: {landedOnPropertyName}
                 </div>
               </div>
-
-              {lastRoll ? (
-                <div className="text-right text-xs text-white">
-                  <div className="font-semibold">Last roll</div>
-                  <div>
-                    {lastRoll.d1} + {lastRoll.d2} = {lastRoll.total}
-                  </div>
+              <div className="bg-white/5 rounded-md p-2 border border-white/10 text-right">
+                <div className="font-medium text-green-300">Last roll</div>
+                <div className="text-sm font-mono">
+                  🎲 {gameState.lastRoll ? gameState.lastRoll.d1 : 0} + 🎲{" "}
+                  {gameState.lastRoll ? gameState.lastRoll.d2 : 0} ={" "}
+                  <span className="text-yellow-300 font-bold">
+                    {gameState.lastRoll ? gameState.lastRoll.total : 0}
+                  </span>
                 </div>
-              ) : (
-                <div className="text-right text-xs opacity-70 text-white">
-                  No roll yet
-                </div>
-              )}
+              </div>
             </div>
-            <hr className="my-3 border-white/20" />
-            {isPlayerTurn && !lastRoll && (
-              <div className="my-3 p-3 bg-white/10 rounded-lg border border-white/10">
+            <hr className="my-3 border-white/30" />
+            {isPlayerTurn && (
+              <div className="my-2 p-3 bg-linear-to-r from-white/10 to-white/5 rounded-lg border border-white/20 shadow-inner">
                 <DiceRoller
                   selectedToken={selectedToken}
                   playerTurn={playerTurn}
@@ -308,13 +307,15 @@ export default function Home() {
                   lastRoll={lastRoll}
                   setLastRoll={setLastRoll}
                   isMoving={isMoving}
+                  socket={socket}
+                  gameId={gameId}
                 />
               </div>
             )}
-            <hr className="my-3 border-white/20" />
+            <hr className="my-3 border-white/30" />
           </div>
 
-          <div className="w-[min(92vw,92vh)] max-w-[980px] aspect-square">
+          <div className="w-[min(92vw,92vh)] max-w-245 aspect-square">
             <div className="h-full w-full border-2 border-black/60 bg-white/60 shadow-lg">
               <div className="relative grid h-full w-full grid-cols-13 grid-rows-13">
                 {/* Corners (2x2) */}

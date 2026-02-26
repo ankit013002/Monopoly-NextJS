@@ -3,20 +3,15 @@ import { PlayerType } from "../types/PlayerType";
 import { BOARD_CELLS } from "../utils/BoardLayout";
 import { AllPropertiesType } from "../types/SpaceType";
 import { GROUP_STRIPE } from "../utils/Groups";
+import { lastRollType } from "../types/lastRollType";
 
 interface PlayerStatsProps {
   playerRef: PlayerType | null;
   socket: SocketIOClient.Socket | null;
   gameId: number | null;
   allProperties: AllPropertiesType;
-  lastRoll: { d1: number; d2: number; total: number } | null;
-  setLastRoll: Dispatch<
-    SetStateAction<{
-      d1: number;
-      d2: number;
-      total: number;
-    } | null>
-  >;
+  lastRoll: lastRollType;
+  setLastRoll: Dispatch<SetStateAction<lastRollType>>;
   mustPayRent: boolean;
 }
 
@@ -65,7 +60,6 @@ const PlayerStats = ({
       console.log("PlayerStats: Cannot end turn - no socket");
       return;
     }
-
     setLastRoll(null);
 
     socket.emit("end-turn", {
