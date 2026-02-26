@@ -16,6 +16,7 @@ import PlayerStats from "../components/PlayerStats";
 import WaitingList from "./(components)/WaitingList";
 import { PlayerType } from "../types/PlayerType";
 import DiceRoller from "../components/DiceRoller";
+import PlayerList from "../components/PlayerList";
 // import MovementDev from "../components/MovementDev";
 
 function sleep(ms: number) {
@@ -65,8 +66,6 @@ export default function Home() {
   }, [gameState, selectedToken]);
 
   const searchParams = useSearchParams();
-
-  console.log("All properties:", gameState?.allProperties);
 
   useEffect(() => {
     const action = searchParams.get("action"); // "create" or "join"
@@ -194,12 +193,14 @@ export default function Home() {
         }
         const players = prevPlayers.map((p) => {
           if (p.socketId === socketId) {
-            const position =
-              p.socketId === socketId
-                ? (p.position + 1) % BOARD_LEN
-                : p.position;
-            landedOnSpaceId = position;
-            return { ...p, position };
+            const newPosition = (p.position + 1) % BOARD_LEN;
+            const updatedPlayer = { ...p, position: newPosition };
+            if (newPosition === 0 && p.position !== 0) {
+              console.log("Player passed GO!");
+              updatedPlayer.balance += 200;
+            }
+            landedOnSpaceId = newPosition;
+            return updatedPlayer;
           } else {
             return p;
           }
@@ -243,47 +244,7 @@ export default function Home() {
         <>
           {/* Rest of game UI */}
           <div className="absolute top-1 left-1 flex flex-col gap-2">
-            <div className="rounded-xl border border-black/30 bg-black/80 shadow-md p-3">
-              <div className="font-bold text-sm mb-2">Players</div>
-              <div className="flex flex-col gap-2">
-                {gameState.players.map((player, index) => {
-                  const isSelected = index === gameState.playerTurnIndex;
-                  console.log("Player: ", player);
-
-                  return (
-                    <div
-                      key={player.socketId}
-                      className={[
-                        "flex items-center justify-between rounded-md border px-3 py-2 text-xs",
-                        "transition-colors",
-                        isSelected
-                          ? "bg-white/40 border-white/80"
-                          : "bg-white/5 border-white/20",
-                      ].join(" ")}
-                    >
-                      {/* Left: color + ID */}
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`h-3 w-3 rounded-full border border-black/40 bg-${player.color}`}
-                        />
-                        <span className="font-semibold">{player.name}</span>
-                      </div>
-
-                      {/* Right: stats */}
-                      <div className="text-right leading-tight">
-                        <div className="font-semibold">
-                          {/*${player.balance.toLocaleString()} */}
-                        </div>
-                        <div className="opacity-80">
-                          Pos {player.position} • {player.ownedSpaces.length}{" "}
-                          props
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <PlayerList gameState={gameState} />
             {isPlayerTurn && (
               <PlayerStats
                 playerRef={player}

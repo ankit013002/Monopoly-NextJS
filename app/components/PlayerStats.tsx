@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction, useEffect } from "react";
 import { PlayerType } from "../types/PlayerType";
 import { BOARD_CELLS } from "../utils/BoardLayout";
 import { AllPropertiesType } from "../types/SpaceType";
+import { GROUP_STRIPE } from "../utils/Groups";
 
 interface PlayerStatsProps {
   playerRef: PlayerType | null;
@@ -87,7 +88,7 @@ const PlayerStats = ({
   console.log("Players ownsed spaces:", playerRef?.ownedSpaces);
 
   return (
-    <div className="rounded-xl border border-black/30 bg-black/80 shadow-md p-3 text-white">
+    <div className="z-1000 rounded-xl border border-black/30 bg-black/80 shadow-md p-3 text-white">
       {playerRef ? (
         <>
           {/* Header */}
@@ -133,11 +134,15 @@ const PlayerStats = ({
                   const space = Object.values(allProperties)
                     .flat()
                     .find((p) => p.id === spaceId);
+
                   return (
                     <div
                       key={spaceId}
-                      className="text-[11px] px-2 py-1 rounded hover:bg-white/10"
+                      className="flex items-center text-center gap-2 text-[11px] px-2 py-1 rounded hover:bg-white/10"
                     >
+                      <div
+                        className={`w-2 h-2 ${GROUP_STRIPE[space!.group!]}`}
+                      />
                       {space?.name ?? `Space ${spaceId}`}
                     </div>
                   );
