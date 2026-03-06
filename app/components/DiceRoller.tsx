@@ -52,7 +52,6 @@ interface DiceRollerProps {
 export default function DiceRoller({
   selectedToken,
   playerTurn,
-  moveTokenSteps,
   lastRoll,
   setLastRoll,
   isMoving,

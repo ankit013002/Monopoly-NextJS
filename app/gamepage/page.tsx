@@ -18,6 +18,7 @@ import { PlayerType } from "../types/PlayerType";
 import DiceRoller from "../components/DiceRoller";
 import PlayerList from "../components/PlayerList";
 import { lastRollType } from "../types/lastRollType";
+import EndTurnButton from "../components/EndTurnButton";
 // import MovementDev from "../components/MovementDev";
 
 function sleep(ms: number) {
@@ -38,6 +39,8 @@ export default function Home() {
   const [gameState, setGameState] = useState<GameStateType | null>(null);
   const [isMoving, setIsMoving] = useState(false);
   const [player, setPlayer] = useState<PlayerType | null>(null);
+  const [selectedPlayerToView, setSelectedPlayerToView] =
+    useState<PlayerType | null>(null);
   const isPlayerTurn = useMemo(() => {
     if (!gameState || !player) return false;
     const currentPlayer = gameState.players[gameState.playerTurnIndex];
@@ -71,7 +74,7 @@ export default function Home() {
     const playerCountParam = searchParams.get("playerCount");
 
     serverUrlRef.current =
-      process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
+      "http://localhost:5000" || process.env.NEXT_PUBLIC_SERVER_URL;
 
     if (!action || !name) {
       redirect("/");
@@ -244,18 +247,31 @@ export default function Home() {
         <>
           {/* Rest of game UI */}
           <div className="absolute top-1 left-1 flex flex-col gap-2">
-            <PlayerList gameState={gameState} />
-            {isPlayerTurn && (
+            <div>
+              <PlayerList
+                selectedPlayerToView={selectedPlayerToView}
+                setPlayerToView={setSelectedPlayerToView}
+                gameState={gameState}
+              />
+            </div>
+            <div>
               <PlayerStats
-                playerRef={player}
+                playerRef={selectedPlayerToView}
                 socket={socket}
                 gameId={gameId}
                 allProperties={gameState.allProperties}
-                lastRoll={lastRoll}
-                setLastRoll={setLastRoll}
-                mustPayRent={mustPayRent}
               />
-            )}
+            </div>
+          </div>
+
+          <div className="absolute bottom-1 right-1 flex">
+            <EndTurnButton
+              socket={socket}
+              gameId={gameId}
+              lastRoll={lastRoll}
+              mustPayRent={mustPayRent}
+              setLastRoll={setLastRoll}
+            />
           </div>
 
           {/* TODO: Need to avoid allowing player to buy property when their turn starts */}
@@ -312,7 +328,6 @@ export default function Home() {
                 />
               </div>
             )}
-            <hr className="my-3 border-white/30" />
           </div>
 
           <div className="w-[min(92vw,92vh)] max-w-245 aspect-square">

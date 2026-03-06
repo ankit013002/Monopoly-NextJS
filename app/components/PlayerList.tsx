@@ -1,25 +1,33 @@
 "use client";
 
 import { GameStateType } from "../types/GameStateType";
+import { PlayerType } from "../types/PlayerType";
 
 interface PlayerListProps {
+  selectedPlayerToView: PlayerType | null;
+  setPlayerToView: React.Dispatch<React.SetStateAction<PlayerType | null>>;
   gameState: GameStateType;
 }
 
-export default function PlayerList({ gameState }: PlayerListProps) {
+export default function PlayerList({
+  selectedPlayerToView,
+  setPlayerToView,
+  gameState,
+}: PlayerListProps) {
   return (
     <div className="z-1000 rounded-xl border border-black/30 bg-black/80 shadow-md p-3">
       <div className="font-bold text-sm mb-2">Players</div>
       <div className="flex flex-col gap-2">
         {gameState.players.map((player, index) => {
-          const isSelected = index === gameState.playerTurnIndex;
+          const isSelected = player === selectedPlayerToView;
           console.log("Player: ", player);
 
           return (
             <div
               key={player.socketId}
+              onClick={() => setPlayerToView(player)}
               className={[
-                "flex items-center justify-between rounded-md border px-3 py-2 text-xs",
+                "flex items-center justify-between rounded-md border px-2 py-2 text-xs",
                 "transition-colors",
                 isSelected
                   ? "bg-white/40 border-white/80"
@@ -38,9 +46,6 @@ export default function PlayerList({ gameState }: PlayerListProps) {
               <div className="text-right leading-tight">
                 <div className="font-semibold">
                   {/*${player.balance.toLocaleString()} */}
-                </div>
-                <div className="opacity-80">
-                  Pos {player.position} • {player.ownedSpaces.length} props
                 </div>
               </div>
             </div>

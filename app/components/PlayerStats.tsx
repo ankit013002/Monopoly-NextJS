@@ -1,31 +1,21 @@
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { useEffect } from "react";
 import { PlayerType } from "../types/PlayerType";
 import { BOARD_CELLS } from "../utils/BoardLayout";
 import { AllPropertiesType } from "../types/SpaceType";
 import { GROUP_STRIPE } from "../utils/Groups";
-import { lastRollType } from "../types/lastRollType";
 
 interface PlayerStatsProps {
   playerRef: PlayerType | null;
   socket: SocketIOClient.Socket | null;
   gameId: number | null;
   allProperties: AllPropertiesType;
-  lastRoll: lastRollType;
-  setLastRoll: Dispatch<SetStateAction<lastRollType>>;
-  mustPayRent: boolean;
 }
 
 const PlayerStats = ({
   playerRef,
   socket,
-  gameId,
   allProperties,
-  lastRoll,
-  setLastRoll,
-  mustPayRent,
 }: PlayerStatsProps) => {
-  console.log(playerRef, "PlayerStats: Received playerRef");
-
   useEffect(() => {
     if (!playerRef) {
       console.log("PlayerStats: No playerRef available");
@@ -49,37 +39,10 @@ const PlayerStats = ({
 
     socket.on("ping-health-response", handlePingResponse);
 
-    // Cleanup function
     return () => {
       socket.off("ping-health-response", handlePingResponse);
     };
   }, [socket, playerRef]);
-
-  const endTurn = () => {
-    if (!socket) {
-      console.log("PlayerStats: Cannot end turn - no socket");
-      return;
-    }
-    setLastRoll(null);
-
-    socket.emit("end-turn", {
-      gameId,
-    });
-  };
-
-  const pingServer = async () => {
-    if (!socket) {
-      console.log("PlayerStats: Cannot ping - no socket");
-      return;
-    }
-
-    console.log("PlayerStats: Sending ping for game", gameId);
-    socket.emit("ping-health", {
-      gameId,
-    });
-  };
-
-  console.log("Players ownsed spaces:", playerRef?.ownedSpaces);
 
   return (
     <div className="z-1000 rounded-xl border border-black/30 bg-black/80 shadow-md p-3 text-white">
@@ -148,20 +111,6 @@ const PlayerStats = ({
               No properties owned
             </div>
           )}
-          <div className="flex flex-col p-3 gap-2">
-            <button className="btn">Trade a Property</button>
-            <button className="btn">Auction a Property</button>
-            <button
-              disabled={mustPayRent || !lastRoll}
-              className="btn bg-red-700"
-              onClick={() => endTurn()}
-            >
-              End Turn
-            </button>
-            <button onClick={() => pingServer()} className="btn bg-red-700">
-              Ping Server
-            </button>
-          </div>
         </>
       ) : (
         <div className="text-xs opacity-60">No player selected</div>
