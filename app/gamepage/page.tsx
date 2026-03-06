@@ -342,8 +342,21 @@ export default function Home() {
             )}
           </div>
 
-          <div className="w-[min(92vw,92vh)] max-w-245 aspect-square">
-            <div className="h-full w-full border-2 border-black/60 bg-white/60 shadow-lg">
+          <div
+            className="w-[min(92vw,92vh)] max-w-245 aspect-square"
+            style={{
+              filter:
+                "drop-shadow(0 8px 32px rgba(0,0,0,0.55)) drop-shadow(0 2px 8px rgba(0,0,0,0.35))",
+            }}
+          >
+            <div
+              className="h-full w-full"
+              style={{
+                border: "4px solid #111",
+                background: "#fdfcf7",
+                boxShadow: "inset 0 0 0 2px #555, inset 0 0 0 4px #f5edde",
+              }}
+            >
               <div className="relative grid h-full w-full grid-cols-13 grid-rows-13">
                 {/* Corners (2x2) */}
                 <Cell
@@ -389,7 +402,6 @@ export default function Home() {
                     key={`top-${i}`}
                     space={space}
                     edge="top"
-                    rotate={180}
                     gridColumn={3 + i}
                     gridRow={1}
                     colSpan={1}
@@ -403,7 +415,6 @@ export default function Home() {
                     key={`bottom-${i}`}
                     space={space}
                     edge="bottom"
-                    rotate={0}
                     gridColumn={3 + i}
                     gridRow={12}
                     colSpan={1}
@@ -417,7 +428,6 @@ export default function Home() {
                     key={`left-${i}`}
                     space={space}
                     edge="left"
-                    rotate={90}
                     gridColumn={1}
                     gridRow={3 + i}
                     colSpan={2}
@@ -431,7 +441,6 @@ export default function Home() {
                     key={`right-${i}`}
                     space={space}
                     edge="right"
-                    rotate={-90}
                     gridColumn={12}
                     gridRow={3 + i}
                     colSpan={2}

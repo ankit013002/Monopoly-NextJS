@@ -113,7 +113,7 @@ const PropertyCard = ({
   console.log(property?.ownedBy);
 
   return (
-    <div className="absolute right-1 bottom-3 z-10">
+    <div className="absolute left-1 bottom-3 z-10">
       {property?.type === "property" ? (
         <div className="w-[260px] bg-[#fdfcf7] border-2 border-black shadow-[3px_3px_0px_#000] font-sans">
           {/* Color band */}
