@@ -17,103 +17,116 @@ const PlayerStats = ({
   allProperties,
 }: PlayerStatsProps) => {
   useEffect(() => {
-    if (!playerRef) {
-      console.log("PlayerStats: No playerRef available");
-      return;
-    }
-
-    if (!socket) {
-      console.log("PlayerStats: No socket available");
-      return;
-    }
-
-    console.log("PlayerStats: Setting up ping-health-response listener");
+    if (!playerRef || !socket) return;
 
     const handlePingResponse = (response: {
       message: string;
       from: string;
     }) => {
-      console.log("PlayerStats: Received ping response:", response);
       console.log(response.message, "from socket:", response.from);
     };
 
     socket.on("ping-health-response", handlePingResponse);
-
     return () => {
       socket.off("ping-health-response", handlePingResponse);
     };
   }, [socket, playerRef]);
 
+  if (!playerRef) return null;
+
+  const positionName =
+    BOARD_CELLS[playerRef.position]?.space?.name ?? "Unknown";
+
+  const ownedWithData = playerRef.ownedSpaces.map((spaceId) => ({
+    spaceId,
+    space: Object.values(allProperties)
+      .flat()
+      .find((p) => p.id === spaceId),
+  }));
+
   return (
-    <div className="z-1000 rounded-xl border border-black/30 bg-black/80 shadow-md p-3 text-white">
-      {playerRef ? (
-        <>
-          {/* Header */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="font-bold text-sm">Player {playerRef.name}</div>
-            <div
-              className="h-3 w-3 rounded-full border border-black/40"
-              style={{ backgroundColor: playerRef.color }}
-            />
+    <div className="rounded-xl border border-white/15 bg-linear-to-b from-black/95 to-black/85 backdrop-blur-sm shadow-xl shadow-black/50 text-white overflow-hidden">
+      {/* Colored header strip */}
+      <div
+        className="px-3 py-2.5 flex items-center gap-2.5 border-b"
+        style={{ borderColor: `${playerRef.color}40` }}
+      >
+        <div
+          className="w-4 h-4 rounded-full flex-shrink-0 border-2 border-black/20"
+          style={{
+            backgroundColor: playerRef.color,
+            boxShadow: `0 0 10px ${playerRef.color}80`,
+          }}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-bold text-white truncate">
+            {playerRef.name}
           </div>
-
-          {/* Stats */}
-          <div className="text-xs space-y-1">
-            <div className="flex justify-between">
-              <span className="opacity-80">Balance</span>
-              <span className="font-semibold">
-                ${playerRef.balance.toLocaleString()}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="opacity-80">Position</span>
-              <span className="font-semibold">
-                {playerRef.position} —{" "}
-                {BOARD_CELLS[playerRef.position]?.space?.name ?? "Unknown"}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="opacity-80">Properties</span>
-              <span className="font-semibold">
-                {playerRef.ownedSpaces.length}
-              </span>
-            </div>
+          <div className="text-[9px] text-white/35 uppercase tracking-wider">
+            Stats
           </div>
+        </div>
+      </div>
 
-          {/* Owned properties list */}
-          {playerRef?.ownedSpaces.length > 0 ? (
-            <div className="mt-3">
-              <div className="text-xs font-semibold mb-1">Owned Spaces</div>
-              <div className="max-h-24 overflow-y-auto rounded-md border border-white/10 bg-white/5 p-1">
-                {playerRef.ownedSpaces.map((spaceId) => {
-                  const space = Object.values(allProperties)
-                    .flat()
-                    .find((p) => p.id === spaceId);
+      {/* Key stats */}
+      <div className="px-3 py-2.5 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-white/45">Balance</span>
+          <span className="text-sm font-bold text-green-400">
+            ${playerRef.balance.toLocaleString()}
+          </span>
+        </div>
 
-                  return (
-                    <div
-                      key={spaceId}
-                      className="flex items-center text-center gap-2 text-[11px] px-2 py-1 rounded hover:bg-white/10"
-                    >
-                      <div
-                        className={`w-2 h-2 ${GROUP_STRIPE[space!.group!]}`}
-                      />
-                      {space?.name ?? `Space ${spaceId}`}
-                    </div>
-                  );
-                })}
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[10px] text-white/45 flex-shrink-0">
+            Position
+          </span>
+          <span className="text-[11px] font-semibold text-white/80 text-right truncate">
+            {positionName}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-white/45">Properties</span>
+          <span
+            className={[
+              "text-xs font-bold tabular-nums",
+              ownedWithData.length > 0 ? "text-white" : "text-white/30",
+            ].join(" ")}
+          >
+            {ownedWithData.length}
+          </span>
+        </div>
+      </div>
+
+      {/* Owned properties */}
+      {ownedWithData.length > 0 ? (
+        <div className="border-t border-white/10 px-3 py-2">
+          <div className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-1.5">
+            Owned
+          </div>
+          <div className="max-h-28 overflow-y-auto flex flex-col gap-0.5 scrollbar-thin">
+            {ownedWithData.map(({ spaceId, space }) => (
+              <div
+                key={spaceId}
+                className="flex items-center gap-2 py-0.5 hover:bg-white/5 rounded px-1 -mx-1"
+              >
+                <div
+                  className={`w-2 h-2 rounded-sm flex-shrink-0 ${GROUP_STRIPE[space!.group!]}`}
+                />
+                <span className="text-[11px] text-white/70 truncate">
+                  {space?.name ?? `Space ${spaceId}`}
+                </span>
               </div>
-            </div>
-          ) : (
-            <div className="mt-3 text-xs opacity-60 italic">
-              No properties owned
-            </div>
-          )}
-        </>
+            ))}
+          </div>
+        </div>
       ) : (
-        <div className="text-xs opacity-60">No player selected</div>
+        <div className="border-t border-white/10 px-3 py-2.5">
+          <span className="text-[10px] text-white/25 italic">
+            No properties yet
+          </span>
+        </div>
       )}
     </div>
   );

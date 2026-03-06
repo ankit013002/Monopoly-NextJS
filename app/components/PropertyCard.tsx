@@ -113,7 +113,7 @@ const PropertyCard = ({
   console.log(property?.ownedBy);
 
   return (
-    <div className="absolute right-1 bottom-3 z-1000">
+    <div className="absolute right-1 bottom-3 z-10">
       {property?.type === "property" ? (
         <div className="w-[260px] bg-[#fdfcf7] border-2 border-black shadow-[3px_3px_0px_#000] font-sans">
           {/* Color band */}
@@ -150,17 +150,17 @@ const PropertyCard = ({
             {landedOnPropertyAction === "BUY" ? (
               <button
                 onClick={() => purchaseProperty()}
-                className="btn flex justify-self-center bg-green-700/80 min-w-full border-green-700/90"
+                className="w-full py-2 rounded-lg border border-green-600/50 bg-green-700/80 text-white text-sm font-bold hover:bg-green-600/90 active:scale-95 transition-all duration-100 shadow-md shadow-green-900/30"
               >
-                Buy Property
+                Buy — ${property.price}
               </button>
             ) : (
               landedOnPropertyAction === "PAY_RENT" && (
                 <button
                   onClick={() => payRent()}
-                  className="btn flex justify-self-center bg-red-700/80 min-w-full border-red-700/90"
+                  className="w-full py-2 rounded-lg border border-red-500/50 bg-red-700/80 text-white text-sm font-bold hover:bg-red-600/90 active:scale-95 transition-all duration-100 shadow-md shadow-red-900/30"
                 >
-                  Pay Rent
+                  Pay Rent — ${property.price}
                 </button>
               )
             )}

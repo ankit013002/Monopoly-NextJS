@@ -14,41 +14,72 @@ export default function PlayerList({
   setPlayerToView,
   gameState,
 }: PlayerListProps) {
+  const currentTurnPlayer = gameState.players[gameState.playerTurnIndex];
+
   return (
-    <div className="z-1000 rounded-xl border border-black/30 bg-black/80 shadow-md p-3">
-      <div className="font-bold text-sm mb-2">Players</div>
-      <div className="flex flex-col gap-2">
-        {gameState.players.map((player, index) => {
-          const isSelected = player === selectedPlayerToView;
-          console.log("Player: ", player);
+    <div className="rounded-xl border border-white/15 bg-linear-to-b from-black/95 to-black/85 backdrop-blur-sm shadow-xl shadow-black/50 text-white overflow-hidden">
+      {/* Header */}
+      <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2">
+        <div className="w-1 h-3 rounded-full bg-yellow-400" />
+        <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">
+          Players
+        </span>
+      </div>
+
+      {/* Player rows */}
+      <div className="p-1.5 flex flex-col gap-0.5">
+        {gameState.players.map((player) => {
+          const isSelected = player.socketId === selectedPlayerToView?.socketId;
+          const isCurrentTurn =
+            player.socketId === currentTurnPlayer?.socketId;
 
           return (
-            <div
+            <button
               key={player.socketId}
               onClick={() => setPlayerToView(player)}
               className={[
-                "flex items-center justify-between rounded-md border px-2 py-2 text-xs",
-                "transition-colors",
+                "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left",
+                "transition-all duration-150 cursor-pointer",
                 isSelected
-                  ? "bg-white/40 border-white/80"
-                  : "bg-white/5 border-white/20",
+                  ? "bg-white/20 ring-1 ring-white/30"
+                  : isCurrentTurn
+                    ? "bg-yellow-400/10 ring-1 ring-yellow-400/25 hover:bg-yellow-400/15"
+                    : "hover:bg-white/10",
               ].join(" ")}
             >
-              {/* Left: color + ID */}
-              <div className="flex items-center gap-2">
-                <div
-                  className={`h-3 w-3 rounded-full border border-black/40 bg-${player.color}`}
-                />
-                <span className="font-semibold">{player.name}</span>
-              </div>
+              {/* Token color circle */}
+              <div
+                className="w-3 h-3 rounded-full flex-shrink-0 border border-black/20 shadow-sm"
+                style={{
+                  backgroundColor: player.color,
+                  boxShadow: isCurrentTurn
+                    ? `0 0 6px ${player.color}99`
+                    : undefined,
+                }}
+              />
 
-              {/* Right: stats */}
-              <div className="text-right leading-tight">
-                <div className="font-semibold">
-                  {/*${player.balance.toLocaleString()} */}
-                </div>
-              </div>
-            </div>
+              {/* Name */}
+              <span
+                className={[
+                  "text-xs font-semibold truncate flex-1 min-w-0",
+                  isCurrentTurn ? "text-yellow-300" : "text-white/90",
+                ].join(" ")}
+              >
+                {player.name}
+              </span>
+
+              {/* Balance */}
+              <span className="text-[10px] font-mono text-green-400/80 flex-shrink-0">
+                ${player.balance.toLocaleString()}
+              </span>
+
+              {/* Turn badge */}
+              {isCurrentTurn && (
+                <span className="flex-shrink-0 text-[8px] font-bold text-yellow-900 bg-yellow-400 rounded px-1 py-0.5 leading-tight">
+                  GO
+                </span>
+              )}
+            </button>
           );
         })}
       </div>

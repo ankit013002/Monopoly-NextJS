@@ -246,25 +246,21 @@ export default function Home() {
       ) : (
         <>
           {/* Rest of game UI */}
-          <div className="absolute top-1 left-1 flex flex-col gap-2">
-            <div>
-              <PlayerList
-                selectedPlayerToView={selectedPlayerToView}
-                setPlayerToView={setSelectedPlayerToView}
-                gameState={gameState}
-              />
-            </div>
-            <div>
-              <PlayerStats
-                playerRef={selectedPlayerToView}
-                socket={socket}
-                gameId={gameId}
-                allProperties={gameState.allProperties}
-              />
-            </div>
+          <div className="absolute top-1 left-1 z-10 flex flex-col gap-2 w-[min(240px,30vw)]">
+            <PlayerList
+              selectedPlayerToView={selectedPlayerToView}
+              setPlayerToView={setSelectedPlayerToView}
+              gameState={gameState}
+            />
+            <PlayerStats
+              playerRef={selectedPlayerToView}
+              socket={socket}
+              gameId={gameId}
+              allProperties={gameState.allProperties}
+            />
           </div>
 
-          <div className="absolute bottom-1 right-1 flex">
+          <div className="absolute bottom-1 right-1 z-10 flex">
             <EndTurnButton
               socket={socket}
               gameId={gameId}
@@ -286,36 +282,52 @@ export default function Home() {
             />
           )}
 
-          <div className="z-1000 absolute right-1 top-1 w-[min(280px,40vw)] rounded-lg border border-white/30 bg-linear-to-b from-black/95 to-black/85 backdrop-blur-sm shadow-xl shadow-white/10 p-3">
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="font-semibold text-sm text-white flex items-center gap-2">
-                <span className="text-yellow-400">👥</span>
-                Players
-              </div>
+          <div className="z-10 absolute right-1 top-1 w-[min(280px,40vw)] rounded-xl border border-white/15 bg-linear-to-b from-black/95 to-black/85 backdrop-blur-sm shadow-xl shadow-black/50 text-white overflow-hidden">
+            {/* Header */}
+            <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2">
+              <div className="w-1 h-3 rounded-full bg-yellow-400" />
+              <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">
+                Game HUD
+              </span>
             </div>
-            <div className="flex flex-col gap-2 text-xs text-white">
-              <div className="bg-white/5 rounded-md p-2 border border-white/10">
-                <div className="font-medium text-yellow-300">
-                  {`${selectedToken?.name ?? "-"}'s Turn`}
+
+            <div className="p-3 flex flex-col gap-2 text-xs">
+              {/* Current turn */}
+              <div className="bg-yellow-400/8 rounded-lg p-2.5 border border-yellow-400/20">
+                <div className="text-[10px] text-yellow-400/60 uppercase tracking-wider mb-0.5">
+                  Current Turn
                 </div>
-                <div className="text-xs opacity-80 mt-1">
-                  On: {landedOnPropertyName}
+                <div className="font-bold text-yellow-300 text-sm">
+                  {selectedToken?.name ?? "—"}
+                </div>
+                <div className="text-[11px] text-white/50 mt-0.5 truncate">
+                  {landedOnPropertyName}
                 </div>
               </div>
-              <div className="bg-white/5 rounded-md p-2 border border-white/10 text-right">
-                <div className="font-medium text-green-300">Last roll</div>
-                <div className="text-sm font-mono">
-                  🎲 {gameState.lastRoll ? gameState.lastRoll.d1 : 0} + 🎲{" "}
-                  {gameState.lastRoll ? gameState.lastRoll.d2 : 0} ={" "}
+
+              {/* Last roll */}
+              <div className="bg-white/5 rounded-lg p-2.5 border border-white/10">
+                <div className="text-[10px] text-white/40 uppercase tracking-wider mb-0.5">
+                  Last Roll
+                </div>
+                <div className="font-mono text-sm">
+                  <span className="text-white/70">
+                    {gameState.lastRoll ? gameState.lastRoll.d1 : 0}
+                  </span>
+                  <span className="text-white/30 mx-1">+</span>
+                  <span className="text-white/70">
+                    {gameState.lastRoll ? gameState.lastRoll.d2 : 0}
+                  </span>
+                  <span className="text-white/30 mx-1">=</span>
                   <span className="text-yellow-300 font-bold">
                     {gameState.lastRoll ? gameState.lastRoll.total : 0}
                   </span>
                 </div>
               </div>
             </div>
-            <hr className="my-3 border-white/30" />
+
             {isPlayerTurn && (
-              <div className="my-2 p-3 bg-linear-to-r from-white/10 to-white/5 rounded-lg border border-white/20 shadow-inner">
+              <div className="mx-3 mb-3 p-3 bg-linear-to-r from-white/8 to-white/4 rounded-lg border border-white/15">
                 <DiceRoller
                   selectedToken={selectedToken}
                   playerTurn={playerTurn}
