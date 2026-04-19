@@ -30,13 +30,16 @@ export default function PlayerList({
       <div className="p-1.5 flex flex-col gap-0.5">
         {gameState.players.map((player) => {
           const isSelected = player.socketId === selectedPlayerToView?.socketId;
-          const isCurrentTurn =
-            player.socketId === currentTurnPlayer?.socketId;
+          const isCurrentTurn = player.socketId === currentTurnPlayer?.socketId;
 
           return (
             <button
               key={player.socketId}
-              onClick={() => setPlayerToView(player)}
+              onClick={() =>
+                setPlayerToView((prev) =>
+                  prev?.socketId === player.socketId ? null : player,
+                )
+              }
               className={[
                 "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left",
                 "transition-all duration-150 cursor-pointer",
