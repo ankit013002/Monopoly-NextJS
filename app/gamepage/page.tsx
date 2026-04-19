@@ -1,15 +1,8 @@
-// app/page.tsx
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect } from "react";
 import io, { Socket } from "socket.io-client";
-import TokensLayer from "../components/TokensLayer";
 import { BOARD_CELLS, BOARD_LEN } from "../utils/BoardLayout";
-import { Cell } from "../components/Cell";
-import { CORNERS } from "../utils/Corners";
-import { ALL_PROPERTIES } from "../utils/Properties";
-import BoardCenter from "../components/BoardCenter";
-import { redirect, useSearchParams } from "next/navigation";
 import { GameStateType } from "../types/GameStateType";
 import PropertyCard from "../components/PropertyCard";
 import PlayerStats from "../components/PlayerStats";
@@ -19,6 +12,7 @@ import DiceRoller from "../components/DiceRoller";
 import PlayerList from "../components/PlayerList";
 import { lastRollType } from "../types/lastRollType";
 import EndTurnButton from "../components/EndTurnButton";
+import { Board } from "../components/Board";
 // import MovementDev from "../components/MovementDev";
 
 function sleep(ms: number) {
@@ -27,34 +21,37 @@ function sleep(ms: number) {
 
 export default function Home() {
   const [gameId, setGameId] = useState<number | null>(null);
-  const serverUrlRef = useRef<string>("");
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [selectedPlayerSocketId, setSelectedPlayerSocketId] =
-    useState<string>("");
-  const [lastRoll, setLastRoll] = useState<lastRollType>(null);
 
-  // Waiting room state
+  const [lastRoll, setLastRoll] = useState<lastRollType>(null);
   const [showWaitingModal, setShowWaitingModal] = useState(true);
-  const [playerCount, setPlayerCount] = useState(0);
   const [gameState, setGameState] = useState<GameStateType | null>(null);
   const [isMoving, setIsMoving] = useState(false);
   const [player, setPlayer] = useState<PlayerType | null>(null);
   const [selectedPlayerToView, setSelectedPlayerToView] =
     useState<PlayerType | null>(null);
+  const [mustPayRent, setMustPayRent] = useState(false);
+
   const isPlayerTurn = useMemo(() => {
     if (!gameState || !player) return false;
     const currentPlayer = gameState.players[gameState.playerTurnIndex];
     if (!currentPlayer || !currentPlayer.socketId) return false;
     return currentPlayer.socketId === player.socketId;
   }, [gameState, player]);
-  const selectedToken = useMemo(
+
+  const socket = useMemo<Socket>(() => {
+    const serverUrl =
+      process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
+    const newSocket = io(serverUrl);
+    return newSocket;
+  }, []);
+
+  const selectedToken = useMemo<PlayerType | undefined>(
     () =>
       gameState?.players.find(
         (_, index) => index === gameState.playerTurnIndex,
       ) ?? gameState?.players[0],
     [gameState],
   );
-  const [mustPayRent, setMustPayRent] = useState(false);
 
   const landedOnPropertyId = useMemo(() => {
     if (!selectedToken || !gameState) return null;
@@ -65,97 +62,20 @@ export default function Home() {
     )?.id;
   }, [gameState, selectedToken]);
 
-  const searchParams = useSearchParams();
-
   useEffect(() => {
-    const action = searchParams.get("action"); // "create" or "join"
-    const name = searchParams.get("playerName");
-    const gameIdParam = searchParams.get("gameId");
-    const playerCountParam = searchParams.get("playerCount");
-
-    serverUrlRef.current =
-      "http://localhost:5000" || process.env.NEXT_PUBLIC_SERVER_URL;
-
-    if (!action || !name) {
-      redirect("/");
-    }
-
-    console.log("GamePage: Creating socket connection");
-    const newSocket = io(serverUrlRef.current);
-    setSocket(newSocket);
-
-    newSocket.on("connect", () => {
-      console.log("GamePage: Socket connected with ID:", newSocket.id);
-
-      if (action === "create") {
-        const count = parseInt(playerCountParam || "2");
-        console.log("GamePage: Creating game for", count, "players");
-        newSocket.emit("create-game", {
-          player: name,
-          playerCount: count,
-          allProperties: ALL_PROPERTIES,
-        });
-      } else if (action === "join" && gameIdParam) {
-        console.log("GamePage: Joining game", gameIdParam);
-        newSocket.emit("join-game", {
-          player: name,
-          gameIdString: gameIdParam,
-        });
-      }
-    });
-
-    newSocket.on(
-      "create-game-confirmation",
-      (response: { gameId: string; gameState: GameStateType }) => {
-        console.log("Game created:", response.gameId);
-        setGameId(parseInt(response.gameId));
-        const responseGameState = response.gameState as GameStateType;
-        setPlayer(
-          responseGameState.players.find((p) => p.socketId === newSocket.id) ??
-            null,
-        );
-        setGameState(responseGameState);
-        setPlayerCount(responseGameState.playerCount);
-      },
-    );
-
-    newSocket.on(
-      "join-game-confirmation",
-      (response: { gameId: string; gameState: GameStateType }) => {
-        console.log("Joined game:", response.gameId);
-        setGameId(parseInt(response.gameId));
-        setPlayerCount(response.gameState.playerCount);
-        setGameState(response.gameState);
-        setPlayer(
-          response.gameState.players.find((p) => p.socketId === newSocket.id) ??
-            null,
-        );
-      },
-    );
-
-    newSocket.on(
-      "game-state-update",
-      (response: { gameState: GameStateType }) => {
-        console.log("Game state updated:", response.gameState);
-        setGameState(response.gameState);
-        setPlayer(
-          response.gameState.players.find((p) => p.socketId === newSocket.id) ??
-            null,
-        );
-      },
-    );
-
-    newSocket.on("game-started", (response: { gameState: GameStateType }) => {
-      console.log("Game started!");
-      setShowWaitingModal(false);
-      console.log("Initial game state:", response.gameState);
+    socket.on("game-state-update", (response: { gameState: GameStateType }) => {
+      console.log("Game state updated:", response.gameState);
       setGameState(response.gameState);
+      setPlayer(
+        response.gameState.players.find((p) => p.socketId === socket.id) ??
+          null,
+      );
     });
 
     return () => {
-      newSocket.disconnect();
+      socket.disconnect();
     };
-  }, [searchParams]);
+  }, [socket]);
 
   const landedOnPropertyName = selectedToken
     ? (BOARD_CELLS[selectedToken.position]?.space?.name ?? "Unknown")
@@ -224,14 +144,17 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-board flex items-center justify-center p-4">
       {/* Waiting Room Modal */}
-      {gameState && showWaitingModal && (
+      {showWaitingModal && (
         <div className="fixed inset-0 z-9999 bg-black/80 flex items-center justify-center">
           <div className="max-w-md">
             <WaitingList
-              playerCount={playerCount}
               socket={socket}
               gameId={gameId}
               gameState={gameState}
+              setGameState={setGameState}
+              setGameId={setGameId}
+              setPlayer={setPlayer}
+              setShowWaitingModal={setShowWaitingModal}
             />
           </div>
         </div>
@@ -342,125 +265,7 @@ export default function Home() {
             )}
           </div>
 
-          <div
-            className="w-[min(92vw,92vh)] max-w-245 aspect-square"
-            style={{
-              filter:
-                "drop-shadow(0 8px 32px rgba(0,0,0,0.55)) drop-shadow(0 2px 8px rgba(0,0,0,0.35))",
-            }}
-          >
-            <div
-              className="h-full w-full"
-              style={{
-                border: "4px solid #111",
-                background: "#fdfcf7",
-                boxShadow: "inset 0 0 0 2px #555, inset 0 0 0 4px #f5edde",
-              }}
-            >
-              <div className="relative grid h-full w-full grid-cols-13 grid-rows-13">
-                {/* Corners (2x2) */}
-                <Cell
-                  space={CORNERS.topLeft}
-                  edge="corner"
-                  isCorner
-                  gridColumn={1}
-                  gridRow={1}
-                  colSpan={2}
-                  rowSpan={2}
-                />
-                <Cell
-                  space={CORNERS.topRight}
-                  edge="corner"
-                  isCorner
-                  gridColumn={12}
-                  gridRow={1}
-                  colSpan={2}
-                  rowSpan={2}
-                />
-                <Cell
-                  space={CORNERS.bottomLeft}
-                  edge="corner"
-                  isCorner
-                  gridColumn={1}
-                  gridRow={12}
-                  colSpan={2}
-                  rowSpan={2}
-                />
-                <Cell
-                  space={CORNERS.bottomRight}
-                  edge="corner"
-                  isCorner
-                  gridColumn={12}
-                  gridRow={12}
-                  colSpan={2}
-                  rowSpan={2}
-                />
-
-                {/* Top edge (row 1-2, col 3-11) left->right */}
-                {gameState.allProperties.topProperties.map((space, i) => (
-                  <Cell
-                    key={`top-${i}`}
-                    space={space}
-                    edge="top"
-                    gridColumn={3 + i}
-                    gridRow={1}
-                    colSpan={1}
-                    rowSpan={2}
-                  />
-                ))}
-
-                {/* Bottom edge (row 12-13, col 3-11) left->right */}
-                {gameState.allProperties.bottomProperties.map((space, i) => (
-                  <Cell
-                    key={`bottom-${i}`}
-                    space={space}
-                    edge="bottom"
-                    gridColumn={3 + i}
-                    gridRow={12}
-                    colSpan={1}
-                    rowSpan={2}
-                  />
-                ))}
-
-                {/* Left edge (col 1-2, row 3-11) top->bottom */}
-                {gameState.allProperties.leftProperties.map((space, i) => (
-                  <Cell
-                    key={`left-${i}`}
-                    space={space}
-                    edge="left"
-                    gridColumn={1}
-                    gridRow={3 + i}
-                    colSpan={2}
-                    rowSpan={1}
-                  />
-                ))}
-
-                {/* Right edge (col 12-13, row 3-11) top->bottom */}
-                {gameState.allProperties.rightProperties.map((space, i) => (
-                  <Cell
-                    key={`right-${i}`}
-                    space={space}
-                    edge="right"
-                    gridColumn={12}
-                    gridRow={3 + i}
-                    colSpan={2}
-                    rowSpan={1}
-                  />
-                ))}
-
-                {/* Center (9x9) + HUD */}
-                <BoardCenter />
-
-                {/* Tokens overlay (on top of cells) */}
-                <TokensLayer
-                  tokens={gameState.players}
-                  board={BOARD_CELLS}
-                  selectedId={selectedPlayerSocketId}
-                  onSelect={setSelectedPlayerSocketId}
-                />
-              </div>
-            </div>
-          </div>
+          <Board gameState={gameState} />
         </>
       )}
     </div>

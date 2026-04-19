@@ -2,23 +2,33 @@
 
 import { GameStateType } from "@/app/types/GameStateType";
 import { PlayerType } from "@/app/types/PlayerType";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { Socket } from "socket.io-client";
+import { redirect, useSearchParams } from "next/navigation";
+import { ALL_PROPERTIES } from "@/app/utils/Properties";
 
 interface WaitingList {
-  playerCount: number;
   socket: Socket | null;
   gameId: number | null;
-  gameState: GameStateType;
+  gameState: GameStateType | null;
+  setGameState: React.Dispatch<React.SetStateAction<GameStateType | null>>;
+  setGameId: React.Dispatch<React.SetStateAction<number | null>>;
+  setPlayer: React.Dispatch<React.SetStateAction<PlayerType | null>>;
+  setShowWaitingModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const WaitingList = ({
-  playerCount,
   socket,
   gameId,
   gameState,
+  setGameState,
+  setGameId,
+  setPlayer,
+  setShowWaitingModal,
 }: WaitingList) => {
+  const searchParams = useSearchParams();
+  const [playerCount, setPlayerCount] = useState(0);
   const players = useMemo<
     Array<{ name: string; inGame: boolean } | undefined>
   >(() => {
@@ -40,6 +50,15 @@ const WaitingList = ({
   }, [gameState, playerCount]);
 
   useEffect(() => {
+    const action = searchParams.get("action");
+    const name = searchParams.get("playerName");
+    const gameIdParam = searchParams.get("gameId");
+    const playerCountParam = searchParams.get("playerCount");
+
+    if (!action || !name) {
+      redirect("/");
+    }
+
     if (!socket) {
       console.log("WaitingList: No socket available");
       return;
@@ -55,12 +74,79 @@ const WaitingList = ({
       // Players will be updated via useMemo when gameState prop changes
     };
 
+    const emitJoinOrCreate = () => {
+      console.log("GamePage: Socket connected with ID:", socket.id);
+
+      if (action === "create") {
+        const count = parseInt(playerCountParam || "2");
+        console.log("GamePage: Creating game for", count, "players");
+        socket.emit("create-game", {
+          player: name,
+          playerCount: count,
+          allProperties: ALL_PROPERTIES,
+        });
+      } else if (action === "join" && gameIdParam) {
+        console.log("GamePage: Joining game", gameIdParam);
+        socket.emit("join-game", {
+          player: name,
+          gameIdString: gameIdParam,
+        });
+      }
+    };
+
+    if (socket.connected) {
+      emitJoinOrCreate();
+    } else {
+      socket.on("connect", emitJoinOrCreate);
+    }
+
+    socket.on(
+      "create-game-confirmation",
+      (response: { gameId: string; gameState: GameStateType }) => {
+        console.log("Game created:", response.gameId);
+        setGameId(parseInt(response.gameId));
+        const responseGameState = response.gameState as GameStateType;
+        setPlayer(
+          responseGameState.players.find((p) => p.socketId === socket.id) ??
+            null,
+        );
+        setGameState(responseGameState);
+        setPlayerCount(responseGameState.playerCount);
+      },
+    );
+
+    socket.on(
+      "join-game-confirmation",
+      (response: { gameId: string; gameState: GameStateType }) => {
+        console.log("Joined game:", response.gameId);
+        setGameId(parseInt(response.gameId));
+        setPlayerCount(response.gameState.playerCount);
+        setGameState(response.gameState);
+        setPlayer(
+          response.gameState.players.find((p) => p.socketId === socket.id) ??
+            null,
+        );
+      },
+    );
+
     socket.on("game-state-update", handleGameStateUpdate);
 
+    socket.on("game-started", (response: { gameState: GameStateType }) => {
+      console.log("WaitingList: Game started!");
+      setGameState(response.gameState);
+      setPlayer(
+        response.gameState.players.find((p) => p.socketId === socket.id) ??
+          null,
+      );
+      setShowWaitingModal(false);
+    });
+
     return () => {
+      socket.off("connect", emitJoinOrCreate);
       socket.off("game-state-update", handleGameStateUpdate);
+      socket.off("game-started");
     };
-  }, [socket]);
+  }, [socket, setShowWaitingModal]);
 
   const startGame = () => {
     if (!socket) {

@@ -1,21 +1,19 @@
 // app/components/TokensLayer.tsx
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import type { BoardCell } from "../utils/BoardLayout";
 import { PlayerType } from "../types/PlayerType";
 
 export default function TokensLayer({
   tokens,
   board,
-  selectedId,
-  onSelect,
 }: {
   tokens: PlayerType[];
   board: BoardCell[];
-  selectedId: string;
-  onSelect: (id: string) => void;
 }) {
+  const [selectedPlayerSocketId, setSelectedPlayerSocketId] =
+    useState<string>("");
   const tokensByPos = useMemo(() => {
     const map = new Map<number, PlayerType[]>();
     for (const t of tokens) {
@@ -43,14 +41,14 @@ export default function TokensLayer({
           >
             <div className="absolute inset-0 flex flex-wrap items-center justify-center gap-0.5 p-0.5">
               {list.map((t) => {
-                const isSelected = selectedId === t.socketId;
+                const isSelected = selectedPlayerSocketId === t.socketId;
                 const initial = t.name.charAt(0).toUpperCase();
                 return (
                   <button
                     key={t.socketId}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onSelect(t.socketId);
+                      setSelectedPlayerSocketId(t.socketId);
                     }}
                     title={`${t.name} @ ${cell.space.name}`}
                     className={[
