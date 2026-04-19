@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, SetStateAction, Dispatch } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PlayerType } from "../types/PlayerType";
 import { roll2d6 } from "../utils/Movement";
 import { lastRollType } from "../types/lastRollType";
-import { GameStateType } from "../types/GameStateType";
+import { Socket } from "socket.io-client";
 
 // Pip layout for each die face (positions in a 3x3 grid: tl, tm, tr, ml, mm, mr, bl, bm, br)
 const PIP_LAYOUTS: Record<number, boolean[]> = {
@@ -45,7 +45,7 @@ interface DiceRollerProps {
   lastRoll: lastRollType;
   setLastRoll: React.Dispatch<React.SetStateAction<lastRollType>>;
   isMoving: boolean;
-  socket: SocketIOClient.Socket | null;
+  socket: Socket | null;
   gameId: number | null;
 }
 

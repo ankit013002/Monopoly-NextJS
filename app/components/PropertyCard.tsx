@@ -1,12 +1,13 @@
 "use client";
 
-import { SetStateAction, useEffect, useMemo, useState } from "react";
+import { SetStateAction, useEffect, useMemo } from "react";
 import { PlayerType } from "../types/PlayerType";
 import { AllPropertiesType, SpaceType } from "../types/SpaceType";
 import { GROUP_STRIPE } from "../utils/Groups";
+import { Socket } from "socket.io-client";
 
 interface PropertyCardPropsType {
-  socket: SocketIOClient.Socket | null;
+  socket: Socket | null;
   gameId: number | null;
   allProperties: AllPropertiesType;
   playerRef: PlayerType | null;

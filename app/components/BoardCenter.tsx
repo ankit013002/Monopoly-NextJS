@@ -23,7 +23,8 @@ const BoardCenter = () => {
         gridRow: "3 / span 9",
         position: "relative",
         overflow: "hidden",
-        background: "linear-gradient(160deg, #faf7f0 0%, #f5edd8 50%, #ede0c4 100%)",
+        background:
+          "linear-gradient(160deg, #faf7f0 0%, #f5edd8 50%, #ede0c4 100%)",
         border: "1px solid rgba(0,0,0,0.65)",
       }}
     >
@@ -109,7 +110,8 @@ const BoardCenter = () => {
           style={{
             width: "55%",
             height: "1px",
-            background: "linear-gradient(90deg, transparent, rgba(60,35,5,0.25), transparent)",
+            background:
+              "linear-gradient(90deg, transparent, rgba(60,35,5,0.25), transparent)",
           }}
         />
 
@@ -170,7 +172,8 @@ const BoardCenter = () => {
           style={{
             width: "60%",
             height: "1.5px",
-            background: "linear-gradient(90deg, transparent, rgba(60,35,5,0.30), transparent)",
+            background:
+              "linear-gradient(90deg, transparent, rgba(60,35,5,0.30), transparent)",
             margin: "2px 0",
           }}
         />
@@ -196,7 +199,6 @@ const BoardCenter = () => {
                 boxShadow: "0 1px 2px rgba(0,0,0,0.20)",
                 border: "1px solid rgba(0,0,0,0.15)",
                 flexShrink: 0,
-                title: g.label,
               }}
               title={g.label}
             />
@@ -232,11 +234,41 @@ const BoardCenter = () => {
       {/* Corner flourishes */}
       {(
         [
-          { top: "18px", left: "18px", bottom: undefined, right: undefined, rotate: "0deg" },
-          { top: "18px", right: "18px", bottom: undefined, left: undefined, rotate: "90deg" },
-          { bottom: "18px", left: "18px", top: undefined, right: undefined, rotate: "-90deg" },
-          { bottom: "18px", right: "18px", top: undefined, left: undefined, rotate: "180deg" },
-        ] as Array<{ top?: string; bottom?: string; left?: string; right?: string; rotate: string }>
+          {
+            top: "18px",
+            left: "18px",
+            bottom: undefined,
+            right: undefined,
+            rotate: "0deg",
+          },
+          {
+            top: "18px",
+            right: "18px",
+            bottom: undefined,
+            left: undefined,
+            rotate: "90deg",
+          },
+          {
+            bottom: "18px",
+            left: "18px",
+            top: undefined,
+            right: undefined,
+            rotate: "-90deg",
+          },
+          {
+            bottom: "18px",
+            right: "18px",
+            top: undefined,
+            left: undefined,
+            rotate: "180deg",
+          },
+        ] as Array<{
+          top?: string;
+          bottom?: string;
+          left?: string;
+          right?: string;
+          rotate: string;
+        }>
       ).map((pos, i) => (
         <div
           key={i}
@@ -253,8 +285,16 @@ const BoardCenter = () => {
             transform: `rotate(${pos.rotate})`,
           }}
         >
-          <svg viewBox="0 0 16 16" style={{ width: "100%", height: "100%", opacity: 0.22 }}>
-            <path d="M0,16 L0,2 Q0,0 2,0 L16,0" fill="none" stroke="#3a2000" strokeWidth="1.5" />
+          <svg
+            viewBox="0 0 16 16"
+            style={{ width: "100%", height: "100%", opacity: 0.22 }}
+          >
+            <path
+              d="M0,16 L0,2 Q0,0 2,0 L16,0"
+              fill="none"
+              stroke="#3a2000"
+              strokeWidth="1.5"
+            />
             <circle cx="2" cy="2" r="1.2" fill="#3a2000" />
           </svg>
         </div>

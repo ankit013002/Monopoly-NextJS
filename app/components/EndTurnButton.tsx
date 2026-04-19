@@ -1,8 +1,9 @@
 import { Dispatch, SetStateAction } from "react";
 import { lastRollType } from "../types/lastRollType";
+import { Socket } from "socket.io-client";
 
 interface EndTurnButtonProps {
-  socket: SocketIOClient.Socket | null;
+  socket: Socket | null;
   gameId: number | null;
   lastRoll: lastRollType;
   mustPayRent: boolean;

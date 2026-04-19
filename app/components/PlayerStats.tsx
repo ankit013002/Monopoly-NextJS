@@ -3,10 +3,10 @@ import { PlayerType } from "../types/PlayerType";
 import { BOARD_CELLS } from "../utils/BoardLayout";
 import { AllPropertiesType } from "../types/SpaceType";
 import { GROUP_STRIPE } from "../utils/Groups";
-
+import { Socket } from "socket.io-client";
 interface PlayerStatsProps {
   playerRef: PlayerType | null;
-  socket: SocketIOClient.Socket | null;
+  socket: Socket | null;
   gameId: number | null;
   allProperties: AllPropertiesType;
 }

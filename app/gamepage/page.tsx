@@ -2,7 +2,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef } from "react";
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
 import TokensLayer from "../components/TokensLayer";
 import { BOARD_CELLS, BOARD_LEN } from "../utils/BoardLayout";
 import { Cell } from "../components/Cell";
@@ -28,7 +28,7 @@ function sleep(ms: number) {
 export default function Home() {
   const [gameId, setGameId] = useState<number | null>(null);
   const serverUrlRef = useRef<string>("");
-  const [socket, setSocket] = useState<SocketIOClient.Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [selectedPlayerSocketId, setSelectedPlayerSocketId] =
     useState<string>("");
   const [lastRoll, setLastRoll] = useState<lastRollType>(null);

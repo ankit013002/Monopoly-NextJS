@@ -4,10 +4,11 @@ import { GameStateType } from "@/app/types/GameStateType";
 import { PlayerType } from "@/app/types/PlayerType";
 import { useEffect, useMemo } from "react";
 import { FaCheck } from "react-icons/fa";
+import { Socket } from "socket.io-client";
 
 interface WaitingList {
   playerCount: number;
-  socket: SocketIOClient.Socket | null;
+  socket: Socket | null;
   gameId: number | null;
   gameState: GameStateType;
 }
@@ -93,13 +94,17 @@ const WaitingList = ({
             key={index}
             className={[
               "flex items-center gap-3 px-3 py-2.5 rounded-lg",
-              player?.inGame ? "bg-white/8" : "bg-white/3 border border-white/5 border-dashed",
+              player?.inGame
+                ? "bg-white/8"
+                : "bg-white/3 border border-white/5 border-dashed",
             ].join(" ")}
           >
             <div
               className={[
                 "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0",
-                player?.inGame ? "bg-white/15 text-white/70" : "bg-white/5 text-white/20",
+                player?.inGame
+                  ? "bg-white/15 text-white/70"
+                  : "bg-white/5 text-white/20",
               ].join(" ")}
             >
               {index + 1}
