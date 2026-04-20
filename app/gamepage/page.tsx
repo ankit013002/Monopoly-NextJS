@@ -105,7 +105,16 @@ export default function Home() {
 
     setIsMoving(true);
     let landedOnSpaceId = 0;
+
+    // Get starting position from current game state
+    const startingPlayer = gameState?.players.find(
+      (p) => p.socketId === socketId
+    );
+    let positionTracker = startingPlayer?.position ?? 0;
+
     for (let i = 0; i < steps; i++) {
+      positionTracker = (positionTracker + 1) % BOARD_LEN;
+
       setGameState((prev) => {
         const prevPlayers = prev?.players;
         if (!prevPlayers) {
@@ -113,13 +122,12 @@ export default function Home() {
         }
         const players = prevPlayers.map((p) => {
           if (p.socketId === socketId) {
-            const newPosition = (p.position + 1) % BOARD_LEN;
-            const updatedPlayer = { ...p, position: newPosition };
-            if (newPosition === 0 && p.position !== 0) {
+            const updatedPlayer = { ...p, position: positionTracker };
+            if (positionTracker === 0 && p.position !== 0) {
               console.log("Player passed GO!");
               updatedPlayer.balance += 200;
             }
-            landedOnSpaceId = newPosition;
+            landedOnSpaceId = positionTracker;
             return updatedPlayer;
           } else {
             return p;
