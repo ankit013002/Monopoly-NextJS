@@ -14,7 +14,6 @@ interface WaitingList {
   gameState: GameStateType | null;
   setGameState: React.Dispatch<React.SetStateAction<GameStateType | null>>;
   setGameId: React.Dispatch<React.SetStateAction<number | null>>;
-  setPlayer: React.Dispatch<React.SetStateAction<PlayerType | null>>;
   setShowWaitingModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -24,7 +23,6 @@ const WaitingList = ({
   gameState,
   setGameState,
   setGameId,
-  setPlayer,
   setShowWaitingModal,
 }: WaitingList) => {
   const searchParams = useSearchParams();
@@ -106,10 +104,6 @@ const WaitingList = ({
         console.log("Game created:", response.gameId);
         setGameId(parseInt(response.gameId));
         const responseGameState = response.gameState as GameStateType;
-        setPlayer(
-          responseGameState.players.find((p) => p.socketId === socket.id) ??
-            null,
-        );
         setGameState(responseGameState);
         setPlayerCount(responseGameState.playerCount);
       },
@@ -122,10 +116,6 @@ const WaitingList = ({
         setGameId(parseInt(response.gameId));
         setPlayerCount(response.gameState.playerCount);
         setGameState(response.gameState);
-        setPlayer(
-          response.gameState.players.find((p) => p.socketId === socket.id) ??
-            null,
-        );
       },
     );
 
@@ -134,10 +124,6 @@ const WaitingList = ({
     socket.on("game-started", (response: { gameState: GameStateType }) => {
       console.log("WaitingList: Game started!");
       setGameState(response.gameState);
-      setPlayer(
-        response.gameState.players.find((p) => p.socketId === socket.id) ??
-          null,
-      );
       setShowWaitingModal(false);
     });
 

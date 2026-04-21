@@ -21,22 +21,13 @@ function sleep(ms: number) {
 
 export default function Home() {
   const [gameId, setGameId] = useState<number | null>(null);
-
   const [lastRoll, setLastRoll] = useState<lastRollType>(null);
   const [showWaitingModal, setShowWaitingModal] = useState(true);
   const [gameState, setGameState] = useState<GameStateType | null>(null);
   const [isMoving, setIsMoving] = useState(false);
-  const [player, setPlayer] = useState<PlayerType | null>(null);
   const [selectedPlayerToView, setSelectedPlayerToView] =
     useState<PlayerType | null>(null);
   const [mustPayRent, setMustPayRent] = useState(false);
-
-  const isPlayerTurn = useMemo(() => {
-    if (!gameState || !player) return false;
-    const currentPlayer = gameState.players[gameState.playerTurnIndex];
-    if (!currentPlayer || !currentPlayer.socketId) return false;
-    return currentPlayer.socketId === player.socketId;
-  }, [gameState, player]);
 
   const socket = useMemo<Socket>(() => {
     const serverUrl =
@@ -44,6 +35,13 @@ export default function Home() {
     const newSocket = io(serverUrl);
     return newSocket;
   }, []);
+
+  const isPlayerTurn = useMemo(() => {
+    if (!gameState) return false;
+    const currentPlayer = gameState.players[gameState.playerTurnIndex];
+    if (!currentPlayer || !currentPlayer.socketId) return false;
+    return currentPlayer.socketId === socket.id;
+  }, [gameState, socket.id]);
 
   const selectedToken = useMemo<PlayerType | undefined>(
     () =>
@@ -66,10 +64,6 @@ export default function Home() {
     socket.on("game-state-update", (response: { gameState: GameStateType }) => {
       console.log("Game state updated:", response.gameState);
       setGameState(response.gameState);
-      setPlayer(
-        response.gameState.players.find((p) => p.socketId === socket.id) ??
-          null,
-      );
     });
 
     return () => {
@@ -108,7 +102,7 @@ export default function Home() {
 
     // Get starting position from current game state
     const startingPlayer = gameState?.players.find(
-      (p) => p.socketId === socketId
+      (p) => p.socketId === socketId,
     );
     let positionTracker = startingPlayer?.position ?? 0;
 
@@ -161,7 +155,6 @@ export default function Home() {
               gameState={gameState}
               setGameState={setGameState}
               setGameId={setGameId}
-              setPlayer={setPlayer}
               setShowWaitingModal={setShowWaitingModal}
             />
           </div>
@@ -202,16 +195,20 @@ export default function Home() {
           </div>
 
           {/* TODO: Need to avoid allowing player to buy property when their turn starts */}
-          {landedOnPropertyId && isPlayerTurn && !isMoving && lastRoll && (
-            <PropertyCard
-              socket={socket}
-              gameId={gameId}
-              allProperties={gameState.allProperties}
-              playerRef={player}
-              propertyId={landedOnPropertyId}
-              setMustPayRent={setMustPayRent}
-            />
-          )}
+          {landedOnPropertyId &&
+            isPlayerTurn &&
+            !isMoving &&
+            lastRoll &&
+            selectedToken && (
+              <PropertyCard
+                socket={socket}
+                gameId={gameId}
+                allProperties={gameState.allProperties}
+                playerRef={selectedToken}
+                propertyId={landedOnPropertyId}
+                setMustPayRent={setMustPayRent}
+              />
+            )}
 
           <div className="z-10 absolute right-1 top-1 w-[min(280px,40vw)] rounded-xl border border-white/15 bg-linear-to-b from-black/95 to-black/85 backdrop-blur-sm shadow-xl shadow-black/50 text-white overflow-hidden">
             {/* Header */}
