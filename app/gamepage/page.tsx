@@ -13,7 +13,6 @@ import PlayerList from "../components/PlayerList";
 import { lastRollType } from "../types/lastRollType";
 import EndTurnButton from "../components/EndTurnButton";
 import { Board } from "../components/Board";
-// import MovementDev from "../components/MovementDev";
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
