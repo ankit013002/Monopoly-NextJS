@@ -14,6 +14,7 @@ import { lastRollType } from "../types/lastRollType";
 import EndTurnButton from "../components/EndTurnButton";
 import { Board } from "../components/Board";
 import TradingModal from "../components/TradingModal";
+import { TradeType } from "../types/TradeType";
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -35,6 +36,7 @@ export default function Home() {
   const [tradeWithPlayer, setTradeWithPlayer] = useState<PlayerType | null>(
     null,
   );
+  const [incomingTrade, setIncomingTrade] = useState<TradeType | null>(null);
 
   const isPlayerTurn = useMemo(() => {
     if (!gameState) return false;
@@ -55,6 +57,15 @@ export default function Home() {
     if (!gameState || !socket?.id) return null;
     return gameState.players.find((p) => p.socketId === socket.id) ?? null;
   }, [gameState, socket?.id]);
+
+  const effectiveTradePartner = useMemo(() => {
+    if (tradeWithPlayer) return tradeWithPlayer;
+    if (incomingTrade && gameState)
+      return (
+        gameState.players.find((p) => p.socketId === incomingTrade.from) ?? null
+      );
+    return null;
+  }, [tradeWithPlayer, incomingTrade, gameState]);
 
   const landedOnPropertyId = useMemo(() => {
     if (!selectedToken || !gameState) return null;
@@ -82,6 +93,10 @@ export default function Home() {
         setGameState(response.gameState);
       },
     );
+
+    newSocket.on("trade-offer", (response: TradeType) => {
+      setIncomingTrade(response);
+    });
 
     return () => {
       newSocket.disconnect();
@@ -180,16 +195,18 @@ export default function Home() {
         </div>
       )}
 
-      {gameState && tradeWithPlayer && (
+      {gameState && (tradeWithPlayer || incomingTrade) && (
         <div className="fixed w-screen h-screen inset-0 z-9999 bg-black/80 flex items-center justify-center">
           <div className="max-w-md">
             <TradingModal
               currentPlayer={currentPlayer}
-              tradeWithPlayer={tradeWithPlayer}
+              tradeWithPlayer={effectiveTradePartner}
               gameId={gameId}
               gameState={gameState}
-              setGameState={setGameState}
+              socket={socket}
               setTradeWithPlayer={setTradeWithPlayer}
+              incomingTrade={incomingTrade}
+              setIncomingTrade={setIncomingTrade}
             />
           </div>
         </div>
