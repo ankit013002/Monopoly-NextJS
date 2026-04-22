@@ -5,7 +5,7 @@ import { PlayerType } from "@/app/types/PlayerType";
 import { useEffect, useMemo, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { Socket } from "socket.io-client";
-import { redirect, useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { ALL_PROPERTIES } from "@/app/utils/Properties";
 
 interface WaitingList {
@@ -25,6 +25,7 @@ const WaitingList = ({
   setGameId,
   setShowWaitingModal,
 }: WaitingList) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [playerCount, setPlayerCount] = useState(0);
   const players = useMemo<
@@ -54,7 +55,7 @@ const WaitingList = ({
     const playerCountParam = searchParams.get("playerCount");
 
     if (!action || !name) {
-      redirect("/");
+      router.push("/");
     }
 
     if (!socket) {
@@ -98,41 +99,46 @@ const WaitingList = ({
       socket.on("connect", emitJoinOrCreate);
     }
 
-    socket.on(
-      "create-game-confirmation",
-      (response: { gameId: string; gameState: GameStateType }) => {
-        console.log("Game created:", response.gameId);
-        setGameId(parseInt(response.gameId));
-        const responseGameState = response.gameState as GameStateType;
-        setGameState(responseGameState);
-        setPlayerCount(responseGameState.playerCount);
-      },
-    );
+    const handleCreateGameConfirmation = (response: {
+      gameId: string;
+      gameState: GameStateType;
+    }) => {
+      console.log("Game created:", response.gameId);
+      setGameId(parseInt(response.gameId));
+      const responseGameState = response.gameState as GameStateType;
+      setGameState(responseGameState);
+      setPlayerCount(responseGameState.playerCount);
+    };
 
-    socket.on(
-      "join-game-confirmation",
-      (response: { gameId: string; gameState: GameStateType }) => {
-        console.log("Joined game:", response.gameId);
-        setGameId(parseInt(response.gameId));
-        setPlayerCount(response.gameState.playerCount);
-        setGameState(response.gameState);
-      },
-    );
+    const handleJoinGameConfirmation = (response: {
+      gameId: string;
+      gameState: GameStateType;
+    }) => {
+      console.log("Joined game:", response.gameId);
+      setGameId(parseInt(response.gameId));
+      setPlayerCount(response.gameState.playerCount);
+      setGameState(response.gameState);
+    };
 
-    socket.on("game-state-update", handleGameStateUpdate);
-
-    socket.on("game-started", (response: { gameState: GameStateType }) => {
+    const handleGameStarted = (response: { gameState: GameStateType }) => {
       console.log("WaitingList: Game started!");
       setGameState(response.gameState);
       setShowWaitingModal(false);
-    });
+    };
+
+    socket.on("create-game-confirmation", handleCreateGameConfirmation);
+    socket.on("join-game-confirmation", handleJoinGameConfirmation);
+    socket.on("game-state-update", handleGameStateUpdate);
+    socket.on("game-started", handleGameStarted);
 
     return () => {
       socket.off("connect", emitJoinOrCreate);
+      socket.off("create-game-confirmation", handleCreateGameConfirmation);
+      socket.off("join-game-confirmation", handleJoinGameConfirmation);
       socket.off("game-state-update", handleGameStateUpdate);
-      socket.off("game-started");
+      socket.off("game-started", handleGameStarted);
     };
-  }, [socket, setShowWaitingModal]);
+  }, [socket, setShowWaitingModal, searchParams]);
 
   const startGame = () => {
     if (!socket) {

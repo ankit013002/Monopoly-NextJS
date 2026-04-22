@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import io, { Socket } from "socket.io-client";
 import { BOARD_CELLS, BOARD_LEN } from "../utils/BoardLayout";
 import { GameStateType } from "../types/GameStateType";
@@ -28,19 +28,15 @@ export default function Home() {
     useState<PlayerType | null>(null);
   const [mustPayRent, setMustPayRent] = useState(false);
 
-  const socket = useMemo<Socket>(() => {
-    const serverUrl =
-      process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
-    const newSocket = io(serverUrl);
-    return newSocket;
-  }, []);
+  const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   const isPlayerTurn = useMemo(() => {
     if (!gameState) return false;
     const currentPlayer = gameState.players[gameState.playerTurnIndex];
     if (!currentPlayer || !currentPlayer.socketId) return false;
-    return currentPlayer.socketId === socket.id;
-  }, [gameState, socket.id]);
+    return currentPlayer.socketId === socket?.id;
+  }, [gameState, socket?.id]);
 
   const selectedToken = useMemo<PlayerType | undefined>(
     () =>
@@ -60,15 +56,29 @@ export default function Home() {
   }, [gameState, selectedToken]);
 
   useEffect(() => {
-    socket.on("game-state-update", (response: { gameState: GameStateType }) => {
-      console.log("Game state updated:", response.gameState);
-      setGameState(response.gameState);
+    const serverUrl =
+      process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
+    const newSocket = io(serverUrl);
+    socketRef.current = newSocket;
+
+    newSocket.on("connect", () => {
+      setSocket(newSocket);
     });
 
+    newSocket.on(
+      "game-state-update",
+      (response: { gameState: GameStateType }) => {
+        console.log("Game state updated:", response.gameState);
+        setGameState(response.gameState);
+      },
+    );
+
     return () => {
-      socket.disconnect();
+      newSocket.disconnect();
+      socketRef.current = null;
+      setSocket(null);
     };
-  }, [socket]);
+  }, []);
 
   const landedOnPropertyName = selectedToken
     ? (BOARD_CELLS[selectedToken.position]?.space?.name ?? "Unknown")
