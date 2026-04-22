@@ -13,6 +13,7 @@ import PlayerList from "../components/PlayerList";
 import { lastRollType } from "../types/lastRollType";
 import EndTurnButton from "../components/EndTurnButton";
 import { Board } from "../components/Board";
+import TradingModal from "../components/TradingModal";
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -31,6 +32,10 @@ export default function Home() {
   const socketRef = useRef<Socket | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
 
+  const [tradeWithPlayer, setTradeWithPlayer] = useState<PlayerType | null>(
+    null,
+  );
+
   const isPlayerTurn = useMemo(() => {
     if (!gameState) return false;
     const currentPlayer = gameState.players[gameState.playerTurnIndex];
@@ -45,6 +50,11 @@ export default function Home() {
       ) ?? gameState?.players[0],
     [gameState],
   );
+
+  const currentPlayer = useMemo(() => {
+    if (!gameState || !socket?.id) return null;
+    return gameState.players.find((p) => p.socketId === socket.id) ?? null;
+  }, [gameState, socket?.id]);
 
   const landedOnPropertyId = useMemo(() => {
     if (!selectedToken || !gameState) return null;
@@ -170,6 +180,21 @@ export default function Home() {
         </div>
       )}
 
+      {gameState && tradeWithPlayer && (
+        <div className="fixed w-screen h-screen inset-0 z-9999 bg-black/80 flex items-center justify-center">
+          <div className="max-w-md">
+            <TradingModal
+              currentPlayer={currentPlayer}
+              tradeWithPlayer={tradeWithPlayer}
+              gameId={gameId}
+              gameState={gameState}
+              setGameState={setGameState}
+              setTradeWithPlayer={setTradeWithPlayer}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Game UI - only render when game state is loaded */}
       {!gameState ? (
         <div className="text-white text-center">
@@ -187,9 +212,10 @@ export default function Home() {
             />
             <PlayerStats
               playerRef={selectedPlayerToView}
+              currentPlayer={currentPlayer}
               socket={socket}
-              gameId={gameId}
               allProperties={gameState.allProperties}
+              setTradeWithPlayer={setTradeWithPlayer}
             />
           </div>
 

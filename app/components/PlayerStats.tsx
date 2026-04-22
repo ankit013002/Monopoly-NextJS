@@ -6,15 +6,18 @@ import { GROUP_STRIPE } from "../utils/Groups";
 import { Socket } from "socket.io-client";
 interface PlayerStatsProps {
   playerRef: PlayerType | null;
+  currentPlayer: PlayerType | null;
   socket: Socket | null;
-  gameId: number | null;
   allProperties: AllPropertiesType;
+  setTradeWithPlayer: React.Dispatch<React.SetStateAction<PlayerType | null>>;
 }
 
 const PlayerStats = ({
   playerRef,
+  currentPlayer,
   socket,
   allProperties,
+  setTradeWithPlayer,
 }: PlayerStatsProps) => {
   useEffect(() => {
     if (!playerRef || !socket) return;
@@ -126,6 +129,16 @@ const PlayerStats = ({
           <span className="text-[10px] text-white/25 italic">
             No properties yet
           </span>
+        </div>
+      )}
+      {currentPlayer?.socketId !== playerRef.socketId && (
+        <div className="border-t border-white/10 px-3 py-2.5">
+          <button
+            onClick={() => setTradeWithPlayer(playerRef)}
+            className="w-full text-[11px] font-semibold text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg py-1.5 transition-colors duration-150"
+          >
+            Trade
+          </button>
         </div>
       )}
     </div>
