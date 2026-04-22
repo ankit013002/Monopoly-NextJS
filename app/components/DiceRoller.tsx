@@ -143,6 +143,31 @@ export default function DiceRoller({
           )}
         </div>
       </div>
+
+      {/* Debug: quick-move buttons */}
+      <div className="flex gap-1.5 w-full">
+        {[1, 3, 6, 10].map((steps) => (
+          <button
+            key={steps}
+            onClick={() => {
+              if (!selectedToken || rolling || isMoving || lastRoll != null) return;
+              const fakeRoll = { d1: steps, d2: 0, total: steps };
+              socket?.emit("dice-roll", { gameId, diceRoll: fakeRoll });
+              setLastRoll(fakeRoll);
+              void playerTurn(selectedToken.socketId, steps);
+            }}
+            disabled={disabled}
+            className={[
+              "flex-1 py-1 rounded text-xs font-bold transition-all border border-yellow-400/30",
+              disabled
+                ? "opacity-30 cursor-not-allowed bg-yellow-400/5 text-yellow-400/40"
+                : "bg-yellow-400/10 text-yellow-300 hover:bg-yellow-400/20 active:scale-95 cursor-pointer",
+            ].join(" ")}
+          >
+            +{steps}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

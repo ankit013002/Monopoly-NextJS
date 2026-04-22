@@ -12,6 +12,7 @@ interface PropertyCardPropsType {
   allProperties: AllPropertiesType;
   playerRef: PlayerType | null;
   propertyId: number;
+  mustPayRent: boolean;
   setMustPayRent: React.Dispatch<SetStateAction<boolean>>;
 }
 
@@ -21,6 +22,7 @@ const PropertyCard = ({
   allProperties,
   playerRef,
   propertyId,
+  mustPayRent,
   setMustPayRent,
 }: PropertyCardPropsType) => {
   const property = useMemo<SpaceType | null>(() => {
@@ -51,7 +53,7 @@ const PropertyCard = ({
 
   useEffect(() => {
     if (landedOnPropertyAction === "PAY_RENT") setMustPayRent(true);
-  }, [landedOnPropertyAction, setMustPayRent]);
+  }, [landedOnPropertyAction, propertyId, setMustPayRent]);
 
   function purchaseProperty() {
     if (!playerRef) {
@@ -156,7 +158,8 @@ const PropertyCard = ({
                 Buy — ${property.price}
               </button>
             ) : (
-              landedOnPropertyAction === "PAY_RENT" && (
+              landedOnPropertyAction === "PAY_RENT" &&
+              mustPayRent && (
                 <button
                   onClick={() => payRent()}
                   className="w-full py-2 rounded-lg border border-red-500/50 bg-red-700/80 text-white text-sm font-bold hover:bg-red-600/90 active:scale-95 transition-all duration-100 shadow-md shadow-red-900/30"

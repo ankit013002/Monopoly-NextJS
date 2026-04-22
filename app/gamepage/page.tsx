@@ -241,6 +241,7 @@ export default function Home() {
                 allProperties={gameState.allProperties}
                 playerRef={selectedToken}
                 propertyId={landedOnPropertyId}
+                mustPayRent={mustPayRent}
                 setMustPayRent={setMustPayRent}
               />
             )}

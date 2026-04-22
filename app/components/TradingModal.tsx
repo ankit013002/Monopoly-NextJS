@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import { GameStateType } from "@/app/types/GameStateType";
 import { PlayerType } from "@/app/types/PlayerType";
 import { FaTimes } from "react-icons/fa";
+import { TradeType } from "../types/TradeType";
+import { GROUP_STRIPE } from "../utils/Groups";
 
 interface TradingModalProps {
   currentPlayer: PlayerType | null;
@@ -14,13 +16,6 @@ interface TradingModalProps {
   setTradeWithPlayer: React.Dispatch<React.SetStateAction<PlayerType | null>>;
 }
 
-interface TradeOffer {
-  propertiesOffered: string[];
-  moneyOffered: number;
-  propertiesWanted: string[];
-  moneyWanted: number;
-}
-
 export default function TradingModal({
   currentPlayer,
   tradeWithPlayer,
@@ -29,11 +24,17 @@ export default function TradingModal({
   setGameState,
   setTradeWithPlayer,
 }: TradingModalProps) {
-  const [tradeOffer, setTradeOffer] = useState<TradeOffer>({
-    propertiesOffered: [],
-    moneyOffered: 0,
-    propertiesWanted: [],
-    moneyWanted: 0,
+  const [tradeOffer, setTradeOffer] = useState<TradeType>({
+    from: currentPlayer?.socketId || "",
+    to: tradeWithPlayer?.socketId || "",
+    offer: {
+      money: 0,
+      properties: [],
+    },
+    request: {
+      money: 0,
+      properties: [],
+    },
   });
 
   // Get properties owned by current player
@@ -54,21 +55,27 @@ export default function TradingModal({
     );
   }, [tradeWithPlayer, gameState.allProperties]);
 
-  const handleTogglePropertyOffered = (propertyId: string) => {
+  const handleTogglePropertyOffered = (propertyId: number) => {
     setTradeOffer((prev) => ({
       ...prev,
-      propertiesOffered: prev.propertiesOffered.includes(propertyId)
-        ? prev.propertiesOffered.filter((id) => id !== propertyId)
-        : [...prev.propertiesOffered, propertyId],
+      offer: {
+        ...prev.offer,
+        properties: prev.offer.properties.includes(propertyId)
+          ? prev.offer.properties.filter((id) => id !== propertyId)
+          : [...prev.offer.properties, propertyId],
+      },
     }));
   };
 
-  const handleTogglePropertyWanted = (propertyId: string) => {
+  const handleTogglePropertyWanted = (propertyId: number) => {
     setTradeOffer((prev) => ({
       ...prev,
-      propertiesWanted: prev.propertiesWanted.includes(propertyId)
-        ? prev.propertiesWanted.filter((id) => id !== propertyId)
-        : [...prev.propertiesWanted, propertyId],
+      request: {
+        ...prev.request,
+        properties: prev.request.properties.includes(propertyId)
+          ? prev.request.properties.filter((id) => id !== propertyId)
+          : [...prev.request.properties, propertyId],
+      },
     }));
   };
 
@@ -78,9 +85,7 @@ export default function TradingModal({
     // Emit trade offer to server
     const tradeData = {
       gameId,
-      fromPlayerId: currentPlayer.socketId,
-      toPlayerId: tradeWithPlayer?.socketId,
-      offer: tradeOffer,
+      ...tradeOffer,
     };
 
     console.log("Trade offer:", tradeData);
@@ -128,7 +133,7 @@ export default function TradingModal({
           {/* Properties Offered */}
           <div className="space-y-2">
             <label className="text-xs text-white/60 font-semibold">
-              Properties ({tradeOffer.propertiesOffered.length})
+              Properties ({tradeOffer.offer.properties.length})
             </label>
             <div className="space-y-1 max-h-32 overflow-y-auto">
               {currentPlayerProperties.length > 0 ? (
@@ -139,16 +144,22 @@ export default function TradingModal({
                   >
                     <input
                       type="checkbox"
-                      checked={tradeOffer.propertiesOffered.includes(
-                        property.id.toString(),
+                      checked={tradeOffer.offer.properties.includes(
+                        property.id,
                       )}
-                      onChange={() =>
-                        handleTogglePropertyOffered(property.id.toString())
-                      }
+                      onChange={() => handleTogglePropertyOffered(property.id)}
                       className="w-4 h-4"
                     />
                     <div>
-                      <div className="text-sm text-white">{property.name}</div>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-2 h-2 rounded-sm flex-shrink-0 ${GROUP_STRIPE[property!.group!]}`}
+                        />
+                        <div className="text-sm text-white">
+                          {property.name}
+                        </div>
+                      </div>
+
                       <div className="text-xs text-white/40">
                         ${property.price}
                       </div>
@@ -172,11 +183,14 @@ export default function TradingModal({
               <span className="text-white/60">$</span>
               <input
                 type="number"
-                value={tradeOffer.moneyOffered}
+                value={tradeOffer.offer.money}
                 onChange={(e) =>
                   setTradeOffer((prev) => ({
                     ...prev,
-                    moneyOffered: Math.max(0, parseInt(e.target.value) || 0),
+                    offer: {
+                      ...prev.offer,
+                      money: Math.max(0, parseInt(e.target.value) || 0),
+                    },
                   }))
                 }
                 max={currentPlayer.balance}
@@ -202,7 +216,7 @@ export default function TradingModal({
           {/* Properties Wanted */}
           <div className="space-y-2">
             <label className="text-xs text-white/60 font-semibold">
-              Properties ({tradeOffer.propertiesWanted.length})
+              Properties ({tradeOffer.request.properties.length})
             </label>
             <div className="space-y-1 max-h-32 overflow-y-auto">
               {otherPlayerProperties.length > 0 ? (
@@ -213,16 +227,21 @@ export default function TradingModal({
                   >
                     <input
                       type="checkbox"
-                      checked={tradeOffer.propertiesWanted.includes(
-                        property.id.toString(),
+                      checked={tradeOffer.request.properties.includes(
+                        property.id,
                       )}
-                      onChange={() =>
-                        handleTogglePropertyWanted(property.id.toString())
-                      }
+                      onChange={() => handleTogglePropertyWanted(property.id)}
                       className="w-4 h-4"
                     />
                     <div>
-                      <div className="text-sm text-white">{property.name}</div>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-2 h-2 rounded-sm flex-shrink-0 ${GROUP_STRIPE[property!.group!]}`}
+                        />
+                        <div className="text-sm text-white">
+                          {property.name}
+                        </div>
+                      </div>
                       <div className="text-xs text-white/40">
                         ${property.price}
                       </div>
@@ -246,11 +265,14 @@ export default function TradingModal({
               <span className="text-white/60">$</span>
               <input
                 type="number"
-                value={tradeOffer.moneyWanted}
+                value={tradeOffer.request.money}
                 onChange={(e) =>
                   setTradeOffer((prev) => ({
                     ...prev,
-                    moneyWanted: Math.max(0, parseInt(e.target.value) || 0),
+                    request: {
+                      ...prev.request,
+                      money: Math.max(0, parseInt(e.target.value) || 0),
+                    },
                   }))
                 }
                 max={tradeWithPlayer?.balance}
@@ -273,15 +295,15 @@ export default function TradingModal({
             <div className="flex justify-between">
               <span className="text-white/70">Offering:</span>
               <span className="text-yellow-300 font-semibold">
-                {tradeOffer.propertiesOffered.length} properties + $
-                {tradeOffer.moneyOffered}
+                {tradeOffer.offer.properties.length} properties + $
+                {tradeOffer.offer.money}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-white/70">Requesting:</span>
               <span className="text-cyan-300 font-semibold">
-                {tradeOffer.propertiesWanted.length} properties + $
-                {tradeOffer.moneyWanted}
+                {tradeOffer.request.properties.length} properties + $
+                {tradeOffer.request.money}
               </span>
             </div>
           </div>
@@ -298,8 +320,8 @@ export default function TradingModal({
           <button
             onClick={handleSubmit}
             disabled={
-              tradeOffer.propertiesOffered.length === 0 &&
-              tradeOffer.moneyOffered === 0
+              tradeOffer.offer.properties.length === 0 &&
+              tradeOffer.offer.money === 0
             }
             className="flex-1 py-2.5 rounded-xl border border-green-500/40 bg-green-600/80 text-white hover:bg-green-500/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
           >
