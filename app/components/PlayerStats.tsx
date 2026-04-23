@@ -131,7 +131,7 @@ const PlayerStats = ({
           </span>
         </div>
       )}
-      {currentPlayer?.socketId !== playerRef.socketId && (
+      {currentPlayer && currentPlayer.socketId !== playerRef.socketId && (
         <div className="border-t border-white/10 px-3 py-2.5">
           <button
             onClick={() => setTradeWithPlayer(playerRef)}

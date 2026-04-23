@@ -59,11 +59,11 @@ export default function Home() {
   }, [gameState, socket?.id]);
 
   const effectiveTradePartner = useMemo(() => {
-    if (tradeWithPlayer) return tradeWithPlayer;
     if (incomingTrade && gameState)
       return (
         gameState.players.find((p) => p.socketId === incomingTrade.from) ?? null
       );
+    if (tradeWithPlayer) return tradeWithPlayer;
     return null;
   }, [tradeWithPlayer, incomingTrade, gameState]);
 
@@ -181,7 +181,7 @@ export default function Home() {
     <div className="min-h-screen bg-board flex items-center justify-center p-4">
       {/* Waiting Room Modal */}
       {showWaitingModal && (
-        <div className="fixed inset-0 z-9999 bg-black/80 flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center">
           <div className="max-w-md">
             <WaitingList
               socket={socket}
@@ -195,8 +195,8 @@ export default function Home() {
         </div>
       )}
 
-      {gameState && (tradeWithPlayer || incomingTrade) && (
-        <div className="fixed w-screen h-screen inset-0 z-9999 bg-black/80 flex items-center justify-center">
+      {gameState && currentPlayer && effectiveTradePartner && (tradeWithPlayer || incomingTrade) && (
+        <div className="fixed w-screen h-screen inset-0 z-[9999] bg-black/80 flex items-center justify-center">
           <div className="max-w-md">
             <TradingModal
               currentPlayer={currentPlayer}

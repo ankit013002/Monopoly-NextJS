@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { GameStateType } from "@/app/types/GameStateType";
 import { PlayerType } from "@/app/types/PlayerType";
 import { FaTimes } from "react-icons/fa";
@@ -34,6 +34,12 @@ export default function TradingModal({
   const [mode, setMode] = useState<TradeMode>(
     incomingTrade ? "review" : "propose",
   );
+
+  useEffect(() => {
+    if (incomingTrade) {
+      setMode("review");
+    }
+  }, [incomingTrade]);
 
   const [tradeOffer, setTradeOffer] = useState<TradeType>({
     from: currentPlayer?.socketId || "",
@@ -120,13 +126,13 @@ export default function TradingModal({
   };
 
   const handleAccept = () => {
-    if (!socket || gameId === null) return;
+    if (!socket || gameId === null || !incomingTrade) return;
     socket.emit("accept-trade", { gameId, trade: incomingTrade });
     close();
   };
 
   const handleDecline = () => {
-    if (!socket || gameId === null) return;
+    if (!socket || gameId === null || !incomingTrade) return;
     socket.emit("decline-trade", { gameId, trade: incomingTrade });
     close();
   };
