@@ -4,7 +4,6 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import io, { Socket } from "socket.io-client";
 import { BOARD_CELLS, BOARD_LEN } from "../utils/BoardLayout";
 import { GameStateType } from "../types/GameStateType";
-import PropertyCard from "../components/PropertyCard";
 import PlayerStats from "../components/PlayerStats";
 import WaitingList from "./(components)/WaitingList";
 import { PlayerType } from "../types/PlayerType";
@@ -71,7 +70,7 @@ export default function Home() {
   const landedOnPropertyId = useMemo(() => {
     if (!selectedToken || !gameState) return null;
     return (
-      Object.values(gameState.allProperties)
+      Object.values(gameState.allSpaces)
         .flat()
         .find((space) => space.id === selectedToken.position) ?? null
     )?.id;
@@ -116,11 +115,11 @@ export default function Home() {
       console.error(`Invalid space: ${spaceId}`);
       return null;
     }
-    if (!gameState?.allProperties) {
+    if (!gameState?.allSpaces) {
       console.error("Game properties are not loaded yet.");
       return null;
     }
-    const property = Object.values(gameState.allProperties)
+    const property = Object.values(gameState.allSpaces)
       .flat()
       .find((space) => space.id === spaceId);
     if (!property) {
@@ -235,7 +234,7 @@ export default function Home() {
               playerRef={selectedPlayerToView}
               currentPlayer={currentPlayer}
               socket={socket}
-              allProperties={gameState.allProperties}
+              allProperties={gameState.allSpaces}
               setTradeWithPlayer={setTradeWithPlayer}
             />
           </div>
@@ -259,9 +258,10 @@ export default function Home() {
               <SpaceHandler
                 socket={socket}
                 gameId={gameId}
-                allSpaces={gameState.allProperties}
+                allSpaces={gameState.allSpaces}
                 playerRef={selectedToken}
                 spaceId={landedOnPropertyId}
+                lastRoll={gameState.lastRoll}
                 mustPayRent={mustPayRent}
                 setMustPayRent={setMustPayRent}
               />

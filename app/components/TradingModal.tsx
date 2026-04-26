@@ -31,15 +31,17 @@ export default function TradingModal({
   incomingTrade,
   setIncomingTrade,
 }: TradingModalProps) {
-  const [mode, setMode] = useState<TradeMode>(
-    incomingTrade ? "review" : "propose",
-  );
+  const [isCountering, setIsCountering] = useState(false);
 
-  useEffect(() => {
+  const mode = useMemo<TradeMode>(() => {
     if (incomingTrade) {
-      setMode("review");
+      return "review";
+    } else if (isCountering) {
+      return "counter";
+    } else {
+      return "propose";
     }
-  }, [incomingTrade]);
+  }, [incomingTrade, isCountering]);
 
   const [tradeOffer, setTradeOffer] = useState<TradeType>({
     from: currentPlayer?.socketId || "",
@@ -56,35 +58,35 @@ export default function TradingModal({
 
   // Get properties owned by current player
   const currentPlayerProperties = useMemo(() => {
-    if (!currentPlayer || !gameState.allProperties) return [];
-    const allProps = Object.values(gameState.allProperties).flat();
+    if (!currentPlayer || !gameState.allSpaces) return [];
+    const allProps = Object.values(gameState.allSpaces).flat();
     return allProps.filter(
       (prop) => prop.ownedBy?.socketId === currentPlayer.socketId,
     );
-  }, [currentPlayer, gameState.allProperties]);
+  }, [currentPlayer, gameState.allSpaces]);
 
   // Get properties owned by other player
   const otherPlayerProperties = useMemo(() => {
-    if (!tradeWithPlayer || !gameState.allProperties) return [];
-    const allProps = Object.values(gameState.allProperties).flat();
+    if (!tradeWithPlayer || !gameState.allSpaces) return [];
+    const allProps = Object.values(gameState.allSpaces).flat();
     return allProps.filter(
       (prop) => prop.ownedBy?.socketId === tradeWithPlayer.socketId,
     );
-  }, [tradeWithPlayer, gameState.allProperties]);
+  }, [tradeWithPlayer, gameState.allSpaces]);
 
   const incomingOfferProperties = useMemo(() => {
-    const allProps = Object.values(gameState.allProperties).flat();
+    const allProps = Object.values(gameState.allSpaces).flat();
     return (incomingTrade?.offer.properties ?? [])
       .map((id) => allProps.find((p) => p.id === id))
       .filter(Boolean);
-  }, [incomingTrade, gameState.allProperties]);
+  }, [incomingTrade, gameState.allSpaces]);
 
   const incomingRequestProperties = useMemo(() => {
-    const allProps = Object.values(gameState.allProperties).flat();
+    const allProps = Object.values(gameState.allSpaces).flat();
     return (incomingTrade?.request.properties ?? [])
       .map((id) => allProps.find((p) => p.id === id))
       .filter(Boolean);
-  }, [incomingTrade, gameState.allProperties]);
+  }, [incomingTrade, gameState.allSpaces]);
 
   const handleTogglePropertyOffered = (propertyId: number) => {
     setTradeOffer((prev) => ({
@@ -150,7 +152,7 @@ export default function TradingModal({
         properties: incomingTrade?.offer.properties ?? [],
       },
     });
-    setMode("counter");
+    setIsCountering(true);
   };
 
   if (!currentPlayer || !tradeWithPlayer) {
@@ -482,7 +484,9 @@ export default function TradingModal({
             {/* Buttons */}
             <div className="flex gap-3 pt-4">
               <button
-                onClick={mode === "counter" ? () => setMode("review") : close}
+                onClick={
+                  mode === "counter" ? () => setIsCountering(false) : close
+                }
                 className="flex-1 py-2.5 rounded-xl border border-white/20 text-white/70 hover:bg-white/5 transition-colors font-semibold"
               >
                 {mode === "counter" ? "Back" : "Cancel"}

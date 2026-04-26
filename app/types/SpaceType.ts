@@ -24,10 +24,10 @@ export type SpaceType = {
   };
 };
 
-export type AllPropertiesType = {
-  bottomProperties: SpaceType[];
-  topProperties: SpaceType[];
-  leftProperties: SpaceType[];
-  rightProperties: SpaceType[];
+export type AllSpacesType = {
+  bottomSpaces: SpaceType[];
+  topSpaces: SpaceType[];
+  leftSpaces: SpaceType[];
+  rightSpaces: SpaceType[];
   corners: SpaceType[];
 };

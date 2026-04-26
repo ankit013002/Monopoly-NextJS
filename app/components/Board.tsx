@@ -66,7 +66,7 @@ export const Board = ({ gameState }: BoardProps) => {
           />
 
           {/* Top edge (row 1-2, col 3-11) left->right */}
-          {gameState.allProperties.topProperties.map((space, i) => (
+          {gameState.allSpaces.topSpaces.map((space, i) => (
             <Cell
               key={`top-${i}`}
               space={space}
@@ -79,7 +79,7 @@ export const Board = ({ gameState }: BoardProps) => {
           ))}
 
           {/* Bottom edge (row 12-13, col 3-11) left->right */}
-          {gameState.allProperties.bottomProperties.map((space, i) => (
+          {gameState.allSpaces.bottomSpaces.map((space, i) => (
             <Cell
               key={`bottom-${i}`}
               space={space}
@@ -92,7 +92,7 @@ export const Board = ({ gameState }: BoardProps) => {
           ))}
 
           {/* Left edge (col 1-2, row 3-11) top->bottom */}
-          {gameState.allProperties.leftProperties.map((space, i) => (
+          {gameState.allSpaces.leftSpaces.map((space, i) => (
             <Cell
               key={`left-${i}`}
               space={space}
@@ -105,7 +105,7 @@ export const Board = ({ gameState }: BoardProps) => {
           ))}
 
           {/* Right edge (col 12-13, row 3-11) top->bottom */}
-          {gameState.allProperties.rightProperties.map((space, i) => (
+          {gameState.allSpaces.rightSpaces.map((space, i) => (
             <Cell
               key={`right-${i}`}
               space={space}

@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import { PlayerType } from "../types/PlayerType";
 import { BOARD_CELLS } from "../utils/BoardLayout";
-import { AllPropertiesType } from "../types/SpaceType";
+import { AllSpacesType } from "../types/SpaceType";
 import { GROUP_STRIPE } from "../utils/Groups";
 import { Socket } from "socket.io-client";
 interface PlayerStatsProps {
   playerRef: PlayerType | null;
   currentPlayer: PlayerType | null;
   socket: Socket | null;
-  allProperties: AllPropertiesType;
+  allProperties: AllSpacesType;
   setTradeWithPlayer: React.Dispatch<React.SetStateAction<PlayerType | null>>;
 }
 

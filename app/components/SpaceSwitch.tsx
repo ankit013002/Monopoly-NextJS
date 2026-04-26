@@ -1,5 +1,5 @@
 import React, { SetStateAction, useMemo } from "react";
-import { AllPropertiesType, SpaceType } from "../types/SpaceType";
+import { AllSpacesType, SpaceType } from "../types/SpaceType";
 import PropertyCard from "./PropertyCard";
 import RailroadCard from "./RailroadCard";
 import UtilityCard from "./UtilityCard";
@@ -7,14 +7,16 @@ import TaxCard from "./TaxCard";
 import ChanceCard from "./ChanceCard";
 import CommunityCard from "./CommunityCard";
 import { PlayerType } from "../types/PlayerType";
+import { lastRollType } from "../types/lastRollType";
 import { Socket } from "socket.io-client";
 
 interface SpaceHandlerProps {
   socket: Socket | null;
   gameId: number | null;
-  allSpaces: AllPropertiesType;
+  allSpaces: AllSpacesType;
   playerRef: PlayerType | null;
   spaceId: number;
+  lastRoll: lastRollType;
   mustPayRent: boolean;
   setMustPayRent: React.Dispatch<SetStateAction<boolean>>;
 }
@@ -25,6 +27,7 @@ const SpaceHandler = ({
   allSpaces,
   playerRef,
   spaceId,
+  lastRoll,
   mustPayRent,
   setMustPayRent,
 }: SpaceHandlerProps) => {
@@ -58,7 +61,8 @@ const SpaceHandler = ({
           socket={socket}
           gameId={gameId}
           playerRef={playerRef}
-          property={space}
+          railroadSpace={space}
+          allSpaces={allSpaces}
           mustPayRent={mustPayRent}
           setMustPayRent={setMustPayRent}
         />
@@ -69,7 +73,9 @@ const SpaceHandler = ({
           socket={socket}
           gameId={gameId}
           playerRef={playerRef}
-          property={space}
+          utilitySpace={space}
+          allSpaces={allSpaces}
+          lastRoll={lastRoll}
           mustPayRent={mustPayRent}
           setMustPayRent={setMustPayRent}
         />
@@ -80,7 +86,7 @@ const SpaceHandler = ({
           socket={socket}
           gameId={gameId}
           playerRef={playerRef}
-          property={space}
+          taxSpace={space}
           mustPayRent={mustPayRent}
           setMustPayRent={setMustPayRent}
         />
@@ -91,7 +97,7 @@ const SpaceHandler = ({
           socket={socket}
           gameId={gameId}
           playerRef={playerRef}
-          property={space}
+          chanceSpace={space}
           mustPayRent={mustPayRent}
           setMustPayRent={setMustPayRent}
         />
@@ -102,7 +108,7 @@ const SpaceHandler = ({
           socket={socket}
           gameId={gameId}
           playerRef={playerRef}
-          property={space}
+          communityChestSpace={space}
           mustPayRent={mustPayRent}
           setMustPayRent={setMustPayRent}
         />

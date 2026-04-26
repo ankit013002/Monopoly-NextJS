@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { Socket } from "socket.io-client";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ALL_PROPERTIES } from "@/app/utils/Properties";
+import { ALL_SPACES } from "@/app/utils/Properties";
 
 interface WaitingList {
   socket: Socket | null;
@@ -82,7 +82,7 @@ const WaitingList = ({
         socket.emit("create-game", {
           player: name,
           playerCount: count,
-          allProperties: ALL_PROPERTIES,
+          allProperties: ALL_SPACES,
         });
       } else if (action === "join" && gameIdParam) {
         console.log("GamePage: Joining game", gameIdParam);
