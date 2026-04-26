@@ -15,6 +15,7 @@ import EndTurnButton from "../components/EndTurnButton";
 import { Board } from "../components/Board";
 import TradingModal from "../components/TradingModal";
 import { TradeType } from "../types/TradeType";
+import SpaceHandler from "../components/SpaceSwitch";
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -195,22 +196,25 @@ export default function Home() {
         </div>
       )}
 
-      {gameState && currentPlayer && effectiveTradePartner && (tradeWithPlayer || incomingTrade) && (
-        <div className="fixed w-screen h-screen inset-0 z-[9999] bg-black/80 flex items-center justify-center">
-          <div className="max-w-md">
-            <TradingModal
-              currentPlayer={currentPlayer}
-              tradeWithPlayer={effectiveTradePartner}
-              gameId={gameId}
-              gameState={gameState}
-              socket={socket}
-              setTradeWithPlayer={setTradeWithPlayer}
-              incomingTrade={incomingTrade}
-              setIncomingTrade={setIncomingTrade}
-            />
+      {gameState &&
+        currentPlayer &&
+        effectiveTradePartner &&
+        (tradeWithPlayer || incomingTrade) && (
+          <div className="fixed w-screen h-screen inset-0 z-[9999] bg-black/80 flex items-center justify-center">
+            <div className="max-w-md">
+              <TradingModal
+                currentPlayer={currentPlayer}
+                tradeWithPlayer={effectiveTradePartner}
+                gameId={gameId}
+                gameState={gameState}
+                socket={socket}
+                setTradeWithPlayer={setTradeWithPlayer}
+                incomingTrade={incomingTrade}
+                setIncomingTrade={setIncomingTrade}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Game UI - only render when game state is loaded */}
       {!gameState ? (
@@ -252,12 +256,12 @@ export default function Home() {
             !isMoving &&
             lastRoll &&
             selectedToken && (
-              <PropertyCard
+              <SpaceHandler
                 socket={socket}
                 gameId={gameId}
-                allProperties={gameState.allProperties}
+                allSpaces={gameState.allProperties}
                 playerRef={selectedToken}
-                propertyId={landedOnPropertyId}
+                spaceId={landedOnPropertyId}
                 mustPayRent={mustPayRent}
                 setMustPayRent={setMustPayRent}
               />

@@ -2,16 +2,15 @@
 
 import { SetStateAction, useEffect, useMemo } from "react";
 import { PlayerType } from "../types/PlayerType";
-import { AllPropertiesType, SpaceType } from "../types/SpaceType";
+import { SpaceType } from "../types/SpaceType";
 import { GROUP_STRIPE } from "../utils/Groups";
 import { Socket } from "socket.io-client";
 
 interface PropertyCardPropsType {
   socket: Socket | null;
   gameId: number | null;
-  allProperties: AllPropertiesType;
   playerRef: PlayerType | null;
-  propertyId: number;
+  property: SpaceType;
   mustPayRent: boolean;
   setMustPayRent: React.Dispatch<SetStateAction<boolean>>;
 }
@@ -19,23 +18,12 @@ interface PropertyCardPropsType {
 const PropertyCard = ({
   socket,
   gameId,
-  allProperties,
   playerRef,
-  propertyId,
+  property,
   mustPayRent,
   setMustPayRent,
 }: PropertyCardPropsType) => {
-  const property = useMemo<SpaceType | null>(() => {
-    if (!propertyId && !allProperties) {
-      return null;
-    }
-
-    return (
-      Object.values(allProperties)
-        .flat()
-        .find((prop) => prop.id === propertyId) ?? null
-    );
-  }, [allProperties, propertyId]);
+  console.log(property);
 
   const landedOnPropertyAction = useMemo(() => {
     if (!property) return null;
@@ -53,7 +41,7 @@ const PropertyCard = ({
 
   useEffect(() => {
     if (landedOnPropertyAction === "PAY_RENT") setMustPayRent(true);
-  }, [landedOnPropertyAction, propertyId, setMustPayRent]);
+  }, [landedOnPropertyAction, property.id, setMustPayRent]);
 
   function purchaseProperty() {
     if (!playerRef) {
@@ -171,7 +159,7 @@ const PropertyCard = ({
           </div>
         </div>
       ) : (
-        <div className="w-[260px] text-center text-xs opacity-60">
+        <div className="w-[260px] bg-[#fdfcf7] border-2 border-black shadow-[3px_3px_0px_#000] font-sans ">
           No property selected
         </div>
       )}
