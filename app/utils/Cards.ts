@@ -19,17 +19,25 @@ export const CHANCE_CARDS: CardType[] = [
   {
     id: 4,
     text: "Advance token to the nearest Railroad. Pay owner twice the rental.",
-    effect: { type: "move_nearest", spaceType: "railroad" },
+    effect: {
+      type: "move_nearest",
+      spaceType: "railroad",
+      spaceIds: [5, 15, 25, 35],
+    },
   },
   {
     id: 5,
     text: "Advance token to the nearest Railroad. Pay owner twice the rental.",
-    effect: { type: "move_nearest", spaceType: "railroad" },
+    effect: {
+      type: "move_nearest",
+      spaceType: "railroad",
+      spaceIds: [5, 15, 25, 35],
+    },
   },
   {
     id: 6,
     text: "Advance token to the nearest Utility. If unowned, buy it; if owned, pay 10x your dice roll.",
-    effect: { type: "move_nearest", spaceType: "utility" },
+    effect: { type: "move_nearest", spaceType: "utility", spaceIds: [12, 28] },
   },
   {
     id: 7,
