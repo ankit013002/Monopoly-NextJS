@@ -7,6 +7,7 @@ import { FaCheck } from "react-icons/fa";
 import { Socket } from "socket.io-client";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ALL_SPACES } from "@/app/utils/Properties";
+import { CHANCE_CARDS, COMMUNITY_CHEST_CARDS } from "@/app/utils/Cards";
 
 interface WaitingList {
   socket: Socket | null;
@@ -83,6 +84,8 @@ const WaitingList = ({
           player: name,
           playerCount: count,
           allSpaces: ALL_SPACES,
+          chanceCards: CHANCE_CARDS,
+          communityChestCards: COMMUNITY_CHEST_CARDS,
         });
       } else if (action === "join" && gameIdParam) {
         console.log("GamePage: Joining game", gameIdParam);
