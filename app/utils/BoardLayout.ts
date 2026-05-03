@@ -3,10 +3,10 @@ import { Edge } from "../types/EdgeType";
 import { SpaceType } from "../types/SpaceType";
 import { CORNERS } from "./Corners";
 import {
-  BOTTOM_PROPERTIES,
-  LEFT_PROPERTIES,
-  RIGHT_PROPERTIES,
-  TOP_PROPERTIES,
+  BOTTOM_SPACES,
+  LEFT_SPACES,
+  RIGHT_SPACES,
+  TOP_SPACES,
 } from "./Properties";
 
 export type BoardCell = {
@@ -23,7 +23,7 @@ const corner = (
   pos: number,
   space: SpaceType,
   gridColumn: number,
-  gridRow: number
+  gridRow: number,
 ): BoardCell => ({
   pos,
   space,
@@ -44,7 +44,11 @@ const topEdge = (pos: number, space: SpaceType, i: number): BoardCell => ({
   rowSpan: 2,
 });
 
-const bottomEdgeFromGo = (pos: number, space: SpaceType, i: number): BoardCell => ({
+const bottomEdgeFromGo = (
+  pos: number,
+  space: SpaceType,
+  i: number,
+): BoardCell => ({
   pos,
   space,
   edge: "bottom",
@@ -57,7 +61,7 @@ const bottomEdgeFromGo = (pos: number, space: SpaceType, i: number): BoardCell =
 const leftEdgeFromJailUp = (
   pos: number,
   space: SpaceType,
-  i: number
+  i: number,
 ): BoardCell => ({
   pos,
   space,
@@ -68,7 +72,11 @@ const leftEdgeFromJailUp = (
   rowSpan: 1,
 });
 
-const rightEdgeDown = (pos: number, space: SpaceType, i: number): BoardCell => ({
+const rightEdgeDown = (
+  pos: number,
+  space: SpaceType,
+  i: number,
+): BoardCell => ({
   pos,
   space,
   edge: "right",
@@ -96,7 +104,7 @@ export const BOARD_CELLS: BoardCell[] = (() => {
   cells.push(corner(0, CORNERS.bottomRight, 12, 12));
 
   // 1..9: bottom edge from GO moving toward Jail (reverse your render order)
-  const bottomFromGo = [...BOTTOM_PROPERTIES].reverse(); // Mediterranean -> Connecticut
+  const bottomFromGo = [...BOTTOM_SPACES].reverse(); // Mediterranean -> Connecticut
   bottomFromGo.forEach((space, i) => {
     cells.push(bottomEdgeFromGo(1 + i, space, i));
   });
@@ -105,7 +113,7 @@ export const BOARD_CELLS: BoardCell[] = (() => {
   cells.push(corner(10, CORNERS.bottomLeft, 1, 12));
 
   // 11..19: left edge from Jail going up (reverse your render order)
-  const leftFromJailUp = [...LEFT_PROPERTIES].reverse(); // St Charles -> New York
+  const leftFromJailUp = [...LEFT_SPACES].reverse(); // St Charles -> New York
   leftFromJailUp.forEach((space, i) => {
     cells.push(leftEdgeFromJailUp(11 + i, space, i));
   });
@@ -114,7 +122,7 @@ export const BOARD_CELLS: BoardCell[] = (() => {
   cells.push(corner(20, CORNERS.topLeft, 1, 1));
 
   // 21..29: top edge left->right (your array already in that order)
-  TOP_PROPERTIES.forEach((SpaceEnums, i) => {
+  TOP_SPACES.forEach((SpaceEnums, i) => {
     cells.push(topEdge(21 + i, SpaceEnums, i));
   });
 
@@ -122,7 +130,7 @@ export const BOARD_CELLS: BoardCell[] = (() => {
   cells.push(corner(30, CORNERS.topRight, 12, 1));
 
   // 31..39: right edge top->bottom (your array already in that order)
-  RIGHT_PROPERTIES.forEach((space, i) => {
+  RIGHT_SPACES.forEach((space, i) => {
     cells.push(rightEdgeDown(31 + i, space, i));
   });
 

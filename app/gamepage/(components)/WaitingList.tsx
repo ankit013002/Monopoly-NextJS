@@ -82,7 +82,7 @@ const WaitingList = ({
         socket.emit("create-game", {
           player: name,
           playerCount: count,
-          allProperties: ALL_SPACES,
+          allSpaces: ALL_SPACES,
         });
       } else if (action === "join" && gameIdParam) {
         console.log("GamePage: Joining game", gameIdParam);

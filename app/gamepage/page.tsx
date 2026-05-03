@@ -69,6 +69,7 @@ export default function Home() {
 
   const landedOnPropertyId = useMemo(() => {
     if (!selectedToken || !gameState) return null;
+    console.log(gameState);
     return (
       Object.values(gameState.allSpaces)
         .flat()
